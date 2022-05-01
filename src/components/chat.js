@@ -7,9 +7,14 @@ const JoinChat = (props) => {
   var roomRef = collection(db, 'rooms');
   const [roomName, setroomName] = useState('');
 
-  roomRef = async () => {
-    await addDoc(roomRef, { Name: roomName });
-  };
+  function Join() {
+    let res;
+    console.log(roomRef);
+    roomRef = async () => {
+      this.res = await addDoc(roomRef, { Name: roomName });
+    };
+    console.log(res);
+  }
 
   return (
     <div>
@@ -21,7 +26,7 @@ const JoinChat = (props) => {
         label='ルーム名'
         variant='filled'
       ></TextField>
-      <button onClick={JoinChat()}>Join</button>
+      <button onClick={Join}>Join</button>
     </div>
   );
 };
