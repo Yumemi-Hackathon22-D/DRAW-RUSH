@@ -8,12 +8,12 @@ const JoinChat = (props) => {
   const [roomName, setroomName] = useState('');
 
   function Join() {
-    let res;
     console.log(roomRef);
-    roomRef = async () => {
-      this.res = await addDoc(roomRef, { Name: roomName });
+    const AddRoom = async () => {
+      let res = await addDoc(roomRef, { Name: roomName });
+      console.log(res);
     };
-    console.log(res);
+    AddRoom();
   }
 
   return (
