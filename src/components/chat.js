@@ -1,18 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import db from './../firebase/index';
-import { collection, doc, setDoc, getDocs } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
 import { TextField } from '@mui/material';
 
 const JoinChat = (props) => {
-  var rooms = collection(db, 'rooms');
-  let roomRef;
+  var roomRef = collection(db, 'rooms');
   const [roomName, setroomName] = useState('');
 
-  let joinRoom = {
-    Name: roomName,
+  roomRef = async () => {
+    await addDoc(roomRef, { Name: roomName });
   };
-
-  roomRef = setDoc(rooms, joinRoom);
 
   return (
     <div>
