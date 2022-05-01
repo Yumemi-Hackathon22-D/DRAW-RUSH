@@ -5,7 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { Provider, ReactReduxContext } from 'react-redux';
 import './style.css';
-import Chat from './components/chat';
+import Chat from './components/JoinChat';
 import DrawZone from './components/DrawZone';
 
 const container = document.getElementById('root');

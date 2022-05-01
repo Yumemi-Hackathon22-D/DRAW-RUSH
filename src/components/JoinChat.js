@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import db from './../firebase/index';
+import db from '../firebase/index';
 import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
 import { TextField } from '@mui/material';
 
@@ -8,7 +8,6 @@ const JoinChat = (props) => {
   const [roomName, setroomName] = useState('');
 
   function Join() {
-    console.log(roomRef);
     const AddRoom = async () => {
       let res = await addDoc(roomRef, { Name: roomName });
       console.log(res);
