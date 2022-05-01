@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from "react";
 
-
+//例. <DrawZone penRadius={10}></DrawZone>
 const DrawZone = (props) => {
     const ref = React.createRef();
     const [click, setClick] = React.useState(false);
@@ -21,33 +21,44 @@ const DrawZone = (props) => {
     const clickHandler = useCallback((e) => {
         const x = e.nativeEvent.offsetX;
         const y = e.nativeEvent.offsetY;
-        console.log(`Click:${x},${y}`);
-        setClick(true);
-        if (canvasContext.current != null) {
-            setLastX(x);
-            setLastY(y);
+
+        const isClick=e.buttons===1;
+
+        if (canvasContext.current != null&&isClick) {
+
             canvasContext.current.beginPath();
             canvasContext.current.moveTo(x, y);
             canvasContext.current.lineTo(x, y);
             canvasContext.current.stroke();
             canvasContext.current.closePath();
+            setLastX(x);
+            setLastY(y);
+        }
+        if (isClick){
+            setClick(isClick)
         }
 
-    }, []);
+    }, [click,lastX,lastY]);
     const pointerOutHandler = useCallback((e) => {
-        if (click) {
-
-            console.log(`Out:${e.nativeEvent.offsetX},${e.nativeEvent.offsetY}`);
-            setClick(false);
-        }
-    }, [click]);
-    const pointerMoveHandler = useCallback((e) => {
         if (click) {
             const x = e.nativeEvent.offsetX;
             const y = e.nativeEvent.offsetY;
-            console.log(`${x},${y}`);
-            if (canvasContext.current != null) {
+            canvasContext.current.beginPath();
+            canvasContext.current.moveTo(lastX, lastY);
+            canvasContext.current.lineTo(x, y);
+            canvasContext.current.stroke();
+            canvasContext.current.closePath();
+            setLastX(x);
+            setLastY(y);
+            setClick(false);
+        }
+    }, [click,lastX,lastY]);
+    const pointerMoveHandler = useCallback((e) => {
 
+        if (click) {
+            const x = e.nativeEvent.offsetX;
+            const y = e.nativeEvent.offsetY;
+            if (canvasContext.current != null) {
                 canvasContext.current.beginPath();
                 canvasContext.current.moveTo(lastX, lastY);
                 canvasContext.current.lineTo(x, y);
@@ -60,11 +71,16 @@ const DrawZone = (props) => {
     }, [click, lastX, lastY]);
 
 
+    function clear() {
+        canvasContext.current.clearRect(0, 0, ref.current.width, ref.current.height);
+    }
     return (
         <div>
             <canvas className={"Canvas"} width={800} height={600} ref={ref}
                     onPointerDown={clickHandler}
+                    onPointerEnter={clickHandler}
                     onPointerUp={pointerOutHandler}
+                    onPointerOut={pointerOutHandler}
                     onPointerMove={pointerMoveHandler}
             ></canvas>
         </div>)
