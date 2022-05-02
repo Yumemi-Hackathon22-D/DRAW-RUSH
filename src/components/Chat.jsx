@@ -23,18 +23,39 @@ export const Room = () => {
   };
 
   const Join = () => {
-    const AddRoom = async () => {
-      console.log(allRoomRef)
-      let res = await addDoc(allRoomRef, { Name: roomName });
-      console.log(res);
-      setroomId(res.id);
-      console.log(res.id)
-    };
-    if (!roomId) {
-      AddRoom();
+    // const AddRoom = async () => {
+    //   let res = await addDoc(allRoomRef, { Name: roomName });
+    //   setroomId(res.id);
+    // };
+
+    
+    
+
+    const AddRoomPromise = async () => {
+      await new Promise((resolve) => {
+        let res = addDoc(allRoomRef, { Name: roomName });
+        resolve(res);
+      }).then((val) => {
+        console.log("val is " + val.id);
+        setroomId(val.id)
+      }).then(() => {
+        SetRoom();
+        console.log(roomRef)
+      })
+    }
+    const SetRoom = async () => {
+      await new Promise((resolve) => {
+        roomRef = doc(allRoomRef, roomId);
+      })
     }
 
-    roomRef = allRoomRef.doc("rooms", String(roomId))
+    console.log(!roomId && roomId === "")
+
+    if (!roomId && roomId === "") {
+      AddRoomPromise();
+    }
+
+    // SetRoom();
 
     const JoinRoom = () => {
       useEffect(() => {
