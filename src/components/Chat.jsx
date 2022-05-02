@@ -1,126 +1,111 @@
-import React, { useEffect, useState } from 'react';
-import { firestore, db } from '../firebase/index';
-import { ref, push, set, serverTimestamp, onValue } from 'firebase/database';
-import { collection, doc, setDoc, addDoc,  } from 'firebase/firestore';
-import { TextField } from '@mui/material';
-
-
-
+import React, {useEffect, useState} from 'react';
+import {firestore, db} from '../firebase/index';
+import {ref, push, set, serverTimestamp, onValue, orderByChild} from 'firebase/database';
+import {collection, doc, setDoc, addDoc,} from 'firebase/firestore';
+import {TextField} from '@mui/material';
+import {query} from "uikit/src/js/util";
 
 
 export const Room = () => {
-
-  const allRoomRef = collection(firestore, 'rooms');
-let roomRef;
-const [roomName, setroomName] = useState('');
-const [roomId, setroomId] = useState('');
-const [messages, setMessages] = useState('');
-const [sendMessage, setSendMessage] = useState('');
-const [userName, setUserName] = useState('');
-
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const messageRef = push(ref(db, 'rooms/'+roomId+'/messages/'), {
-        userName: userName,
-        msg: sendMessage,
-        timeStamp: serverTimestamp()
-      });
-    setSendMessage('');
-  };
-
-  const ShowChat = () => {
-    let result = [];
-    console.log(messages);
-     {
-      for (let i in messages) {
-        result.push(
-          <tr key={i}>
-            <th>{i.userName}</th>
-            <td>{i.msg}</td>
-          </tr>
-        )
-      }
-      return result;
+    const allRoomRef = collection(firestore, 'rooms');
+    let roomRef;
+    const [roomName, setroomName] = useState('');
+    const [roomId, setroomId] = useState('');
+    const [messages, setMessages] = useState('');
+    const [sendMessage, setSendMessage] = useState('');
+    const [userName, setUserName] = useState('');
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        const messageRef = push(ref(db, 'rooms/' + roomId + '/messages/'), {
+            userName: userName,
+            msg: sendMessage,
+            timeStamp: serverTimestamp()
+        });
+        setSendMessage('');
+    };
+    const ShowChat = () => {
+        let result = [];
+        console.log(messages);
+        {
+            for (let i in messages) {
+                result.push(
+                    <tr key={i}>
+                        <th>{i.userName}</th>
+                        <td>{i.msg}</td>
+                    </tr>
+                )
+            }
+            return result;
+        }
     }
-  }
-  
-  const Join = () => {
-    const AddRoomPromise = async () => {
-      await new Promise((resolve) => {
-        let res = addDoc(allRoomRef, { Name: roomName });
-        resolve(res);
-      }).then((val) => {
-        setroomId(val.id)
-      })
-      //   .then(() => {
-      //   // SetRoom();
-      //   roomRef = doc(allRoomRef, roomId);
-      // }).then(() => {
-      //   console.log(roomId);
-      // })
-    }
-    const SetRoom = async () => {
-      await new Promise((resolve) => {
-        roomRef = doc(allRoomRef, roomId);
-        resolve();
-      })
-    }
+    const Join = () => {
+        const AddRoomPromise = async () => {
+            let res = await addDoc(allRoomRef, {Name: roomName});
+            setroomId(res.id);
+            await set(ref(db, 'rooms/' + res.id), {messages: ""});
 
-    if (!roomId && roomId === "") {
-      new Promise((resolve) => {
-        AddRoomPromise(); // Firestoreのroomsに追加する
-      }).then(() => {
-        SetRoom(); // 部屋設定を変更する
-        JoinChat();
-      }).then(() => {
-        console.log("Setup fin")
-      }).then(() => {
-        JoinChat();
-        console.log("Joined Chat")
-      })
-    }
+            console.log(res.id);
+            return res.id
+        }
+        const SetRoom = async (roomId) => {
+            roomRef = await doc(allRoomRef, roomId);
+        }
 
-    const JoinChat = () => {
-      useEffect(() => {
-        const chatRef = ref(db, 'rooms/' + roomId + '/messages/');
-        console.log(chatRef);
-        chatRef.orderByChild('timeStamp').limitToLast(100).on('value', (snapshot) => {
-          console.log(snapshot.val());
-          let selfmessages = snapshot.val();
-          setMessages(selfmessages);
-          // $('<li>').text(msg.userName + ' : ' + msg.msg).pretendTo('.messages')
-        })
-      })
-    }
-  };
+        if (!roomId && roomId === "") {
+            const Room = async () => {
+                let id = await AddRoomPromise();
+                await SetRoom(id);
+                return id;
+            }
+            Room().then((id) => {
+                JoinChat(id)
+            })
 
-  return (
-    <div>
-    <div>
-      <TextField
-        value={roomName}
-        onChange={(e) => {
-          setroomName(e.target.value);
-        }}
-        label='ルーム名'
-        variant='filled'
-      ></TextField>
-      <button onClick={Join}>Join</button>
-      </div>
-      <div>
-        <TextField value={userName} 
-          label='ユーザー名'
-          onChange={(e) => setUserName(e.target.value)}
-        variant='filled'></TextField>
-        <TextField value={sendMessage}
-          onChange={(e) => { setSendMessage(e.target.value); }}
-          variant='filled'></TextField>
-        <button onClick={handleSubmit}>Submit</button>
-      </div>
-      <ShowChat></ShowChat>
-    </div>
-  );
+
+        }
+
+        const JoinChat = (id) => {
+            console.log(id)
+            const chatRef = ref(db, 'rooms/' + id + '/messages')//query(ref(db, 'rooms/' + roomId + '/messages'), orderByChild('timeStamp'));
+            console.log(chatRef);
+            onValue(chatRef, (snapshot) => {
+                console.log(snapshot.val());
+                let selfmessages = snapshot.val();
+                setMessages(selfmessages);
+                // $('<li>').text(msg.userName + ' : ' + msg.msg).pretendTo('.messages')
+            })
+
+        }
+    };
+
+    return (
+        <div>
+            <div>
+                <TextField
+                    value={roomName}
+                    onChange={(e) => {
+                        setroomName(e.target.value);
+                    }}
+                    label='ルーム名'
+                    variant='filled'
+                ></TextField>
+                <button onClick={Join}>Join</button>
+            </div>
+            <div>
+                <TextField value={userName}
+                           label='ユーザー名'
+                           onChange={(e) => setUserName(e.target.value)}
+                           variant='filled'></TextField>
+                <TextField value={sendMessage}
+                           onChange={(e) => {
+                               setSendMessage(e.target.value);
+                           }}
+                           variant='filled'></TextField>
+                <button onClick={handleSubmit}>Submit</button>
+            </div>
+            <ShowChat></ShowChat>
+        </div>
+    );
 };
 
 export default Room;
