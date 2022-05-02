@@ -154,7 +154,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
             {beforeStart &&
             <div className={"blocker"}>
 
-                    <Typography variant={"h6"}>今から3秒間の間に上のお題を描いてください。当ててもらえるようにせいぜい頑張れ！！</Typography>
+                    <Typography variant={"h6"}>今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！</Typography>
 
                 <p>
                     <Button variant={"contained"} onClick={startTimer}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
