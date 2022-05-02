@@ -1,15 +1,33 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef} from 'react';
+import * as React from "react";
 
 //例. <DrawZone penRadius={10}></DrawZone>
-const DrawZone = (props) => {
-  const ref = React.createRef();
+const DrawZone = forwardRef((props,ref) => {
+  const canvasRef = React.createRef();
   const [click, setClick] = React.useState(false);
   const [lastX, setLastX] = React.useState(0);
   const [lastY, setLastY] = React.useState(0);
   let canvasContext = useRef(null);
+  useImperativeHandle(ref,()=>{
+    return{
+      clearCanvas() {
+        console.log("がいぶからー")
+        clear();
+      }
+
+    }
+  })
+
+  useEffect(()=>{
+    if (canvasRef.current) {
+      canvasRef.current.width = canvasRef.current.clientWidth;
+      canvasRef.current.height = 9*canvasRef.current.clientWidth/16;
+    }
+  },[ canvasRef.current?.clientWidth,canvasRef.current?.clientHeight]);
   useEffect(() => {
-    if (ref.current) {
-      canvasContext.current = ref.current.getContext('2d');
+
+    if (canvasRef.current) {
+      canvasContext.current = canvasRef.current.getContext('2d');
     }
     if (canvasContext.current != null) {
       canvasContext.current.lineWidth = props.penRadius;
@@ -17,7 +35,7 @@ const DrawZone = (props) => {
       canvasContext.current.lineJoin = 'round';
       canvasContext.current.lineCap = 'round';
     }
-  }, [canvasContext, ref]);
+  }, [canvasContext.current, canvasRef.current]);
   const clickHandler = useCallback(
     (e) => {
       const x = e.nativeEvent.offsetX;
@@ -80,25 +98,26 @@ const DrawZone = (props) => {
     canvasContext.current.clearRect(
       0,
       0,
-      ref.current.width,
-      ref.current.height
+      canvasRef.current.width,
+      canvasRef.current.height
     );
   }
   return (
     <div>
+      <p className={"Timer"}>5.00</p>
       <canvas
-        className={'Canvas'}
-        width={800}
-        height={600}
-        ref={ref}
-        onPointerDown={clickHandler}
-        onPointerEnter={clickHandler}
-        onPointerUp={pointerOutHandler}
-        onPointerOut={pointerOutHandler}
-        onPointerMove={pointerMoveHandler}
+          className={'Canvas'}
+          ref={canvasRef}
+          onPointerDown={clickHandler}
+          onPointerEnter={clickHandler}
+          onPointerUp={pointerOutHandler}
+          onPointerOut={pointerOutHandler}
+          onPointerMove={pointerMoveHandler}
       ></canvas>
       <button onClick={clear}>クリア</button>
     </div>
   );
-};
+});
+
+
 export default DrawZone;
