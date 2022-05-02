@@ -16,7 +16,6 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
         return {
             //ここに関数を定義すれば外部からもよびだせるよ～～～ん
             clearCanvas() {
-                console.log("がいぶからー")
                 clear();
             }
 
@@ -131,7 +130,6 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
         setTime(3)
         setBeforeStart(false)
        let timer= setInterval(()=>{
-           console.log("aaaaaaa")
             setTime(timeRef.current-0.1)
             if (timeRef.current-0.1<= 0) {
                 setBeforeStart(true);

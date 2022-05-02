@@ -54,14 +54,14 @@
   border: solid;
   touch-action: none;
   background: white;
-  width: 70%;
+  width: 65%;
   aspect-ratio: auto 16/9;
 
 }
 .blocker{
   border: solid;
   position: absolute;
-  width: 70%;
+  width: 65%;
   aspect-ratio: auto 16/9;
   background: lightgray;
 

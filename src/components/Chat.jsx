@@ -1,15 +1,14 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {firestore, db} from '../firebase/index';
-import {ref, push, set, serverTimestamp, onValue, orderByChild} from 'firebase/database';
-import {collection, doc, setDoc, addDoc,} from 'firebase/firestore';
+import {ref, push, set, serverTimestamp, onValue} from 'firebase/database';
+import {collection, doc, addDoc,} from 'firebase/firestore';
 import {TextField} from '@mui/material';
-import {query} from "uikit/src/js/util";
 
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-  let roomRef;
-  const [isJoined, setIsJoined] = useState(false); 
+    let roomRef;
+    const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
     const [roomId, setroomId] = useState('');
     const [messages, setMessages] = useState('');
@@ -26,10 +25,7 @@ export const Room = () => {
     };
     const ShowChat = () => {
         let result = [];
-        console.log(messages);
-
-        for (let [key,i] of Object.entries(messages)) {
-            console.log(i)
+        for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
                     <th>{i.userName}</th>
@@ -37,7 +33,9 @@ export const Room = () => {
                 </tr>
             )
         }
-        return (<table><tbody>{result}</tbody></table>);
+        return (<table>
+            <tbody>{result}</tbody>
+        </table>);
 
     }
     const Join = () => {
@@ -45,7 +43,6 @@ export const Room = () => {
             let res = await addDoc(allRoomRef, {Name: roomName});
             setroomId(res.id);
             await set(ref(db, 'rooms/' + res.id), {messages: ""});
-
             console.log(res.id);
             return res.id
         }
@@ -60,22 +57,19 @@ export const Room = () => {
                 return id;
             }
             Room().then((id) => {
-              JoinChat(id)
-              setIsJoined(true)
+                JoinChat(id)
+                setIsJoined(true)
             })
 
 
         }
 
         const JoinChat = (id) => {
-            console.log(id)
-            const chatRef = ref(db, 'rooms/' + id + '/messages')//query(ref(db, 'rooms/' + roomId + '/messages'), orderByChild('timeStamp'));
-            console.log(chatRef);
+            const chatRef = ref(db, 'rooms/' + id + '/messages');
             onValue(chatRef, (snapshot) => {
                 console.log(snapshot.val());
                 let selfmessages = snapshot.val();
                 setMessages(selfmessages);
-                // $('<li>').text(msg.userName + ' : ' + msg.msg).pretendTo('.messages')
             })
 
         }
@@ -93,21 +87,22 @@ export const Room = () => {
                     variant='filled'
                 ></TextField>
                 <button onClick={Join}>Join</button>
-        </div>
-        {isJoined ?<><div>
-                <TextField value={userName}
-                           label='ユーザー名'
-                           onChange={(e) => setUserName(e.target.value)}
-                           variant='filled'></TextField>
-                <TextField value={sendMessage}
-                           onChange={(e) => {
-                               setSendMessage(e.target.value);
-                           }}
-                           variant='filled'></TextField>
-                <button onClick={handleSubmit}>Submit</button>
             </div>
-            <ShowChat></ShowChat></> :<></> }
-        
+            {isJoined ? <>
+                <div>
+                    <TextField value={userName}
+                               label='ユーザー名'
+                               onChange={(e) => setUserName(e.target.value)}
+                               variant='filled'></TextField>
+                    <TextField value={sendMessage}
+                               onChange={(e) => {
+                                   setSendMessage(e.target.value);
+                               }}
+                               variant='filled'></TextField>
+                    <button onClick={handleSubmit}>Submit</button>
+                </div>
+                <ShowChat></ShowChat></> : <></>}
+
         </div>
     );
 };
