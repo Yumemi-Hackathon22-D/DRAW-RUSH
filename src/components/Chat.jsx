@@ -3,17 +3,53 @@ import db from '../firebase/index';
 import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
 import { TextField } from '@mui/material';
 
-const JoinChat = (props) => {
-  var roomRef = collection(db, 'rooms');
+export const Room = () => {
+  const allRoomRef = collection(db, 'rooms');
+  let roomRef;
   const [roomName, setroomName] = useState('');
+  const [roomId, setroomId] = useState('');
+  const [messages, setMessages] = useState('');
+  const [sendMessage, setSetMessage] = useState('');
+  const [userName, setUserName] = useState('');
 
-  function Join() {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    collection(roomRef, 'messages').add({
+      content: sendMessage,
+      user: userName,
+      time: db.Timestamp(),
+    });
+    setSetMessage('');
+  };
+
+  const Join = () => {
     const AddRoom = async () => {
-      let res = await addDoc(roomRef, { Name: roomName });
+      console.log(allRoomRef)
+      let res = await addDoc(allRoomRef, { Name: roomName });
       console.log(res);
+      setroomId(res.id);
+      console.log(res.id)
     };
-    AddRoom();
-  }
+    if (!roomId) {
+      AddRoom();
+    }
+
+    roomRef = allRoomRef.doc("rooms", String(roomId))
+
+    const JoinRoom = () => {
+      useEffect(() => {
+        roomRef
+          .collection("messages")
+          .orderBy("time")
+          .onSnapshot((snapshot) => {
+            const getMessages = snapshot.docs.map((doc) => {
+              return doc.data()
+            });
+            setMessages(getMessages);
+          });
+      })
+    };
+  };
 
   return (
     <div>
@@ -30,7 +66,7 @@ const JoinChat = (props) => {
   );
 };
 
-export default JoinChat;
+export default Room;
 
 // export default class joinRoom extends React.Component {
 //   constructor(props) {

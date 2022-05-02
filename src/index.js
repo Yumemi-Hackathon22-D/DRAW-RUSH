@@ -5,7 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { Provider, ReactReduxContext } from 'react-redux';
 import './style.css';
-import Chat from './components/JoinChat';
+import Room from './components/Chat';
 import DrawZone from './components/DrawZone';
 
 const container = document.getElementById('root');
@@ -13,7 +13,7 @@ const root = createRoot(container);
 
 root.render(
   <div>
-    <Chat />
+    <Room />
     <DrawZone />
   </div>
 );
