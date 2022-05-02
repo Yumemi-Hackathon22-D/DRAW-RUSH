@@ -20,11 +20,7 @@ const [userName, setUserName] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    collection(roomRef, 'messages').add({
-      content: sendMessage,
-      user: userName,
-      time: db.Timestamp(),
-    });
+    addDoc(collection(roomRef), { userName: userName, msg: sendMessage });
     setSendMessage('');
   };
 
@@ -35,13 +31,14 @@ const [userName, setUserName] = useState('');
         let res = addDoc(allRoomRef, { Name: roomName });
         resolve(res);
       }).then((val) => {
-        console.log("val is " + val.id);
         setroomId(val.id)
-      }).then(() => {
-        SetRoom();
-      }).then(() => {
-        console.log(roomId);
       })
+      //   .then(() => {
+      //   // SetRoom();
+      //   roomRef = doc(allRoomRef, roomId);
+      // }).then(() => {
+      //   console.log(roomId);
+      // })
     }
     const SetRoom = async () => {
       await new Promise((resolve) => {
@@ -52,7 +49,11 @@ const [userName, setUserName] = useState('');
     console.log(!roomId && roomId === "")
 
     if (!roomId && roomId === "") {
-      AddRoomPromise(); // Firestoreのroomsに追加する
+      new Promise((resolve) => {
+        AddRoomPromise(); // Firestoreのroomsに追加する
+      }).then(() => {
+        SetRoom(); // 部屋設定を変更する
+      })
     }
 
     const JoinRoom = () => {
