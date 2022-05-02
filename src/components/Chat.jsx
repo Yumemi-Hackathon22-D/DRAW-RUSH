@@ -8,7 +8,8 @@ import {query} from "uikit/src/js/util";
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-    let roomRef;
+  let roomRef;
+  const [isJoined, setIsJoined] = useState(false); 
     const [roomName, setroomName] = useState('');
     const [roomId, setroomId] = useState('');
     const [messages, setMessages] = useState('');
@@ -59,7 +60,8 @@ export const Room = () => {
                 return id;
             }
             Room().then((id) => {
-                JoinChat(id)
+              JoinChat(id)
+              setIsJoined(true)
             })
 
 
@@ -91,8 +93,8 @@ export const Room = () => {
                     variant='filled'
                 ></TextField>
                 <button onClick={Join}>Join</button>
-            </div>
-            <div>
+        </div>
+        {isJoined ?<><div>
                 <TextField value={userName}
                            label='ユーザー名'
                            onChange={(e) => setUserName(e.target.value)}
@@ -104,7 +106,8 @@ export const Room = () => {
                            variant='filled'></TextField>
                 <button onClick={handleSubmit}>Submit</button>
             </div>
-            <ShowChat></ShowChat>
+            <ShowChat></ShowChat></> :<></> }
+        
         </div>
     );
 };
