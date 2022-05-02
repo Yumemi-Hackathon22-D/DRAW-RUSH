@@ -3,7 +3,7 @@ import * as React from "react";
 
 //例. <DrawZone penRadius={10}></DrawZone>
 const DrawZone = forwardRef((props,ref) => {
-  const canvasRef = React.createRef();
+  const canvasRef = React.useRef();
   const [click, setClick] = React.useState(false);
   const [lastX, setLastX] = React.useState(0);
   const [lastY, setLastY] = React.useState(0);
@@ -18,16 +18,32 @@ const DrawZone = forwardRef((props,ref) => {
     }
   })
 
-  useEffect(()=>{
+  useEffect(() => {
+    // コンストラクタとコールバック
+    const observer = new ResizeObserver((entries) => {
+      canvasRef.current.width = entries[0].contentRect.width;
+        canvasRef.current.height = 9 * entries[0].contentRect.width / 16;
+
+      if (canvasContext.current != null) {
+        canvasContext.current.lineWidth = props.penRadius;
+      }
+    });
     if (canvasRef.current) {
-      canvasRef.current.width = canvasRef.current.clientWidth;
-      canvasRef.current.height = 9*canvasRef.current.clientWidth/16;
+      // 要素を監視
+      canvasRef.current && observer.observe(canvasRef.current);
     }
-  },[ canvasRef.current?.clientWidth,canvasRef.current?.clientHeight]);
+    // クリーンアップ関数で監視を解く
+    return () => {
+      observer.disconnect();
+    };
+  }, [canvasRef]);
   useEffect(() => {
 
     if (canvasRef.current) {
       canvasContext.current = canvasRef.current.getContext('2d');
+
+      canvasRef.current.width = canvasRef.current.clientWidth;
+      canvasRef.current.height = 9 * canvasRef.current.clientWidth / 16;
     }
     if (canvasContext.current != null) {
       canvasContext.current.lineWidth = props.penRadius;
@@ -104,17 +120,22 @@ const DrawZone = forwardRef((props,ref) => {
   }
   return (
     <div>
-      <p className={"Timer"}>5.00</p>
+      <p className={"timer"}>5.00</p>
+      <div className={"blocker"}>
+        <Typography variant={"h3"}>お題:???</Typography>
+        <Typography variant={"body1"}>今から5秒間の間に上のお題を描いてください。当ててもらえるように頑張りましょう！！</Typography>
+        <Button variant={"contained"}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+
+      </div>
       <canvas
-          className={'Canvas'}
+          className={'canvas'}
           ref={canvasRef}
           onPointerDown={clickHandler}
           onPointerEnter={clickHandler}
           onPointerUp={pointerOutHandler}
           onPointerOut={pointerOutHandler}
           onPointerMove={pointerMoveHandler}
-      ></canvas>
-      <button onClick={clear}>クリア</button>
+      ></canvas><button>clear</button>
     </div>
   );
 });

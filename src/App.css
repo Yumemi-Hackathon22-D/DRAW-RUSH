@@ -37,18 +37,31 @@
   }
 }
 
-.Canvas{
-  border: solid;
-  touch-action: none;
-  background: white;
-  width: 80%;
-}
+
 @font-face {
   /*https://github.com/keshikan/DSEG*/
   font-family: '7Seg';
   src: url('DSEG7Modern-BoldItalic.woff2') format('woff2');
 }
-.Timer{
+.timer{
   font-family: '7Seg', serif;
   font-size: xxx-large;
+}
+
+
+
+.canvas{
+  border: solid;
+  touch-action: none;
+  background: white;
+  width: 80%;
+  aspect-ratio: auto;
+
+}
+.blocker{
+  display: none;
+  border: solid;
+  position: absolute;
+  width: 80%;
+  background: lightgray;
 }
