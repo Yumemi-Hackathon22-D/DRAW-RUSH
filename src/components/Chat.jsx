@@ -49,7 +49,7 @@ export const Room = () => {
         let Id = await AddRoomPromise();
         setroomId(Id)
       }
-      setroomId(roomName)
+      else setroomId(roomName)
       return roomName;
     }
     
@@ -111,7 +111,8 @@ export const Room = () => {
                                }}
                                variant='filled'></TextField>
                     <button onClick={handleSubmit}>Submit</button>
-                </div>
+          </div>
+          <div><p>この部屋のID: { roomId }</p></div>
                 <ShowChat></ShowChat></> : <></>}
 
         </div>
