@@ -26,14 +26,24 @@ const [userName, setUserName] = useState('');
         msg: sendMessage,
         timeStamp: serverTimestamp()
       });
-    // await addDoc(messageRef, {
-    //   userName: userName,
-    //   msg: sendMessage,
-    //   timeStamp: serverTimestamp()
-    // });
     setSendMessage('');
   };
 
+  const ShowChat = () => {
+    let result = [];
+    console.log(messages);
+     {
+      for (let i in messages) {
+        result.push(
+          <tr key={i}>
+            <th>{i.userName}</th>
+            <td>{i.msg}</td>
+          </tr>
+        )
+      }
+      return result;
+    }
+  }
   
   const Join = () => {
     const AddRoomPromise = async () => {
@@ -53,27 +63,36 @@ const [userName, setUserName] = useState('');
     const SetRoom = async () => {
       await new Promise((resolve) => {
         roomRef = doc(allRoomRef, roomId);
+        resolve();
       })
     }
-
-    console.log(!roomId && roomId === "")
 
     if (!roomId && roomId === "") {
       new Promise((resolve) => {
         AddRoomPromise(); // Firestoreのroomsに追加する
       }).then(() => {
         SetRoom(); // 部屋設定を変更する
+        JoinChat();
+      }).then(() => {
+        console.log("Setup fin")
       }).then(() => {
         JoinChat();
+        console.log("Joined Chat")
       })
     }
 
     const JoinChat = () => {
-      const chatRef = ref(db, 'rooms/' + roomId + '/messages/');
-      chatRef.orderByChild('timeStamp').on('child_added', (snapshot) => {
-        console.log(snapshot.val());
+      useEffect(() => {
+        const chatRef = ref(db, 'rooms/' + roomId + '/messages/');
+        console.log(chatRef);
+        chatRef.orderByChild('timeStamp').limitToLast(100).on('value', (snapshot) => {
+          console.log(snapshot.val());
+          let selfmessages = snapshot.val();
+          setMessages(selfmessages);
+          // $('<li>').text(msg.userName + ' : ' + msg.msg).pretendTo('.messages')
+        })
       })
-    };
+    }
   };
 
   return (
@@ -98,7 +117,8 @@ const [userName, setUserName] = useState('');
           onChange={(e) => { setSendMessage(e.target.value); }}
           variant='filled'></TextField>
         <button onClick={handleSubmit}>Submit</button>
-        </div>
+      </div>
+      <ShowChat></ShowChat>
     </div>
   );
 };
