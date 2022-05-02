@@ -137,7 +137,7 @@ const DrawZone = forwardRef((props,ref) => {
           onPointerUp={pointerOutHandler}
           onPointerOut={pointerOutHandler}
           onPointerMove={pointerMoveHandler}
-      ></canvas><button>clear</button>
+      ></canvas><button onClick={clear}>clear</button>
     </div>
   );
 });
