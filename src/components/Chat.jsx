@@ -50,7 +50,7 @@ export const Room = () => {
         setroomId(Id)
       }
       else setroomId(roomName)
-      return roomName;
+      return roomId;
     }
     
         const AddRoomPromise = async () => {
