@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue} from 'firebase/database';
 import {collection, doc, addDoc, getDoc} from 'firebase/firestore';
@@ -7,7 +7,8 @@ import {TextField} from '@mui/material';
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-    let roomRef;
+  let roomRef;
+  let tmproomName;
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
     const [roomId, setroomId] = useState('');
@@ -40,9 +41,9 @@ export const Room = () => {
             <tbody>{result}</tbody>
         </table>);
 
-    }
+  }
+  
   const Join = () => {
-
     const CheckRoom = async () => {
       let Ref = await doc(allRoomRef, roomName);
       let docSnap = await getDoc(Ref);
@@ -53,6 +54,8 @@ export const Room = () => {
       else setroomId(roomName)
       return roomId;
     }
+
+    
     
         const AddRoomPromise = async () => {
             let res = await addDoc(allRoomRef, {Name: roomName});
@@ -64,17 +67,17 @@ export const Room = () => {
         const SetRoom = async (roomId) => {
             roomRef = await doc(allRoomRef, roomId);
         }
-
-            const Room = async () => {
+    
+    const Room = async () => {
                 let id = await CheckRoom(roomId);
                 await SetRoom(id);
                 return id;
     }
-    
+
             Room().then((id) => {
                 JoinChat(id)
                 setIsJoined(true)
-            })        
+            })
 
         const JoinChat = (id) => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
@@ -83,8 +86,7 @@ export const Room = () => {
                 let selfmessages = snapshot.val();
                 setMessages(selfmessages);
             })
-
-        }
+    }
     };
 
     return (
@@ -92,8 +94,9 @@ export const Room = () => {
             <div>
                 <TextField
                     value={roomName}
-                    onChange={(e) => {
-                        setroomName(e.target.value);
+            onChange={(e) => {
+              tmproomName = e.target.value;
+              setroomName(e.target.value);
                     }}
                     label='ルーム名'
                     variant='filled'
@@ -108,7 +111,8 @@ export const Room = () => {
                                variant='filled'></TextField>
                     <TextField value={sendMessage}
                                onChange={(e) => {
-                                   setSendMessage(e.target.value);
+                                 setSendMessage(e.target.value);
+                          
                                }}
                                variant='filled'></TextField>
                     <button onClick={handleSubmit}>Submit</button>
