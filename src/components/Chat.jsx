@@ -32,6 +32,7 @@ export const Room = () => {
                 <tr key={key}>
                     <th>{i.userName}</th>
                     <td>{i.msg}</td>
+                    <td>{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</td>
                 </tr>
             )
         }
