@@ -14,7 +14,7 @@ const root = createRoot(container);
 root.render(
   <div>
     <Room />
-    <DrawZone />
+    <DrawZone penRadius={5} odai={"くるま！！！！"}/>
   </div>
 );
 // If you want to start measuring performance in your app, pass a function
