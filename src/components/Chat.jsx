@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue} from 'firebase/database';
-import {collection, doc, addDoc,} from 'firebase/firestore';
+import {collection, doc, addDoc, getDoc} from 'firebase/firestore';
 import {TextField} from '@mui/material';
 
 
@@ -13,7 +13,8 @@ export const Room = () => {
     const [roomId, setroomId] = useState('');
     const [messages, setMessages] = useState('');
     const [sendMessage, setSendMessage] = useState('');
-    const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState('');
+  
     const handleSubmit = async (e) => {
         e.preventDefault();
         const messageRef = push(ref(db, 'rooms/' + roomId + '/messages/'), {
@@ -24,7 +25,8 @@ export const Room = () => {
         setSendMessage('');
     };
     const ShowChat = () => {
-        let result = [];
+      let result = [];
+      if (messages === null) return;
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
@@ -38,7 +40,19 @@ export const Room = () => {
         </table>);
 
     }
-    const Join = () => {
+  const Join = () => {
+
+    const CheckRoom = async () => {
+      let Ref = await doc(allRoomRef, roomName);
+      let docSnap = await getDoc(Ref);
+      if (!docSnap.exists()) {
+        let Id = await AddRoomPromise();
+        setroomId(Id)
+      }
+      setroomId(roomName)
+      return roomName;
+    }
+    
         const AddRoomPromise = async () => {
             let res = await addDoc(allRoomRef, {Name: roomName});
             setroomId(res.id);
@@ -50,19 +64,16 @@ export const Room = () => {
             roomRef = await doc(allRoomRef, roomId);
         }
 
-        if (!roomId && roomId === "") {
             const Room = async () => {
-                let id = await AddRoomPromise();
+                let id = await CheckRoom(roomId);
                 await SetRoom(id);
                 return id;
-            }
+    }
+    
             Room().then((id) => {
                 JoinChat(id)
                 setIsJoined(true)
-            })
-
-
-        }
+            })        
 
         const JoinChat = (id) => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
