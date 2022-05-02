@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import db from '../firebase/index';
-import { collection, doc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { firestore, db } from '../firebase/index';
+import { ref, push, set, serverTimestamp, onValue } from 'firebase/database';
+import { collection, doc, setDoc, addDoc,  } from 'firebase/firestore';
 import { TextField } from '@mui/material';
 
 
@@ -9,7 +10,7 @@ import { TextField } from '@mui/material';
 
 export const Room = () => {
 
-  const allRoomRef = collection(db, 'rooms');
+  const allRoomRef = collection(firestore, 'rooms');
 let roomRef;
 const [roomName, setroomName] = useState('');
 const [roomId, setroomId] = useState('');
@@ -20,7 +21,11 @@ const [userName, setUserName] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const messageRef = doc(roomRef, 'messages');
+    const messageRef = push(ref(db, 'rooms/'+roomId+'/messages/'), {
+        userName: userName,
+        msg: sendMessage,
+        timeStamp: serverTimestamp()
+      });
     // await addDoc(messageRef, {
     //   userName: userName,
     //   msg: sendMessage,
@@ -59,21 +64,14 @@ const [userName, setUserName] = useState('');
       }).then(() => {
         SetRoom(); // 部屋設定を変更する
       }).then(() => {
-        setUserName("Yoooooshikaw");
+        JoinChat();
       })
     }
 
-    const JoinRoom = () => {
-      useEffect(() => {
-        roomRef
-          .collection("messages")
-          .orderBy("time")
-          .onSnapshot((snapshot) => {
-            const getMessages = snapshot.docs.map((doc) => {
-              return doc.data()
-            });
-            setMessages(getMessages);
-          });
+    const JoinChat = () => {
+      const chatRef = ref(db, 'rooms/' + roomId + '/messages/');
+      chatRef.orderByChild('timeStamp').on('child_added', (snapshot) => {
+        console.log(snapshot.val());
       })
     };
   };
@@ -92,6 +90,10 @@ const [userName, setUserName] = useState('');
       <button onClick={Join}>Join</button>
       </div>
       <div>
+        <TextField value={userName} 
+          label='ユーザー名'
+          onChange={(e) => setUserName(e.target.value)}
+        variant='filled'></TextField>
         <TextField value={sendMessage}
           onChange={(e) => { setSendMessage(e.target.value); }}
           variant='filled'></TextField>
