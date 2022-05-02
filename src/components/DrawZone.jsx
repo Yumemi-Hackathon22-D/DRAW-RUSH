@@ -1,18 +1,20 @@
 import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
-import * as React from "react";
 import {Button, Typography} from "@mui/material";
 import {PlayCircleOutline} from "@mui/icons-material";
-
+import {storage} from "../firebase";
+import { ref, uploadString } from "firebase/storage";
+import * as React from "react"
 const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
-const DrawZone = forwardRef((props, ref) => {
+const DrawZone = forwardRef((props, drawZoneRef) => {
     const canvasRef = React.useRef();
     const [click, setClick] = React.useState(false);
     const [lastX, setLastX] = React.useState(0);
     const [lastY, setLastY] = React.useState(0);
     let canvasContext = useRef(null);
-    useImperativeHandle(ref, () => {
+    useImperativeHandle(drawZoneRef, () => {
         return {
+            //ここに関数を定義すれば外部からもよびだせるよ～～～ん
             clearCanvas() {
                 console.log("がいぶからー")
                 clear();
@@ -133,7 +135,13 @@ const DrawZone = forwardRef((props, ref) => {
             setTime(timeRef.current-0.1)
             if (timeRef.current-0.1<= 0) {
                 setBeforeStart(true);
-                console.log(canvasRef.current?.toDataURL("image/jpeg",0));
+                const storageRef = ref(storage,'image.jpg');
+                const imageDataUrl=canvasRef.current?.toDataURL("image/jpeg",0);
+                console.log(imageDataUrl);
+                // Data URL string
+                uploadString(storageRef, imageDataUrl, 'data_url').then((snapshot) => {
+                    console.log('Uploaded a data_url string!');
+                });
                 clear();
                 clearInterval(timer);
             }
