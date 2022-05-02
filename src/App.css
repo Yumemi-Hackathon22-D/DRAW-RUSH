@@ -54,14 +54,41 @@
   border: solid;
   touch-action: none;
   background: white;
-  width: 80%;
-  aspect-ratio: auto;
+  width: 70%;
+  aspect-ratio: auto 16/9;
 
 }
 .blocker{
-  display: none;
+  display: inline;
   border: solid;
   position: absolute;
-  width: 80%;
+  width: 70%;
+  aspect-ratio: auto 16/9;
   background: lightgray;
+
+}
+/* デフォルト：980px以上用（PC用）の記述 */
+@media screen and (max-width: 979px) {
+  /* 979px以下用（タブレット用）の記述 */
+}
+@media screen and (max-width: 767px) {
+  /* 767px以下用（タブレット／スマートフォン用）の記述 */
+}
+@media screen and (max-width: 479px) {.canvas{
+  border: solid;
+  touch-action: none;
+  background: white;
+  width: 95%;
+  aspect-ratio: auto 16/9;
+
+}
+  .blocker{
+    display: inline;
+    border: solid;
+    position: absolute;
+    width: 95%;
+    aspect-ratio: auto 16/9;
+    background: lightgray;
+
+  } /* 479px以下用（スマートフォン用）の記述 */
 }
