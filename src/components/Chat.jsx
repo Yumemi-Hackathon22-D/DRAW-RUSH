@@ -26,17 +26,18 @@ export const Room = () => {
     const ShowChat = () => {
         let result = [];
         console.log(messages);
-        {
-            for (let i in messages) {
-                result.push(
-                    <tr key={i}>
-                        <th>{i.userName}</th>
-                        <td>{i.msg}</td>
-                    </tr>
-                )
-            }
-            return result;
+
+        for (let [key,i] of Object.entries(messages)) {
+            console.log(i)
+            result.push(
+                <tr key={key}>
+                    <th>{i.userName}</th>
+                    <td>{i.msg}</td>
+                </tr>
+            )
         }
+        return (<table><tbody>{result}</tbody></table>);
+
     }
     const Join = () => {
         const AddRoomPromise = async () => {
