@@ -3,14 +3,20 @@ import db from '../firebase/index';
 import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
 import { TextField } from '@mui/material';
 
+
+
+
+
 export const Room = () => {
+
   const allRoomRef = collection(db, 'rooms');
-  let roomRef;
-  const [roomName, setroomName] = useState('');
-  const [roomId, setroomId] = useState('');
-  const [messages, setMessages] = useState('');
-  const [sendMessage, setSetMessage] = useState('');
-  const [userName, setUserName] = useState('');
+let roomRef;
+const [roomName, setroomName] = useState('');
+const [roomId, setroomId] = useState('');
+const [messages, setMessages] = useState('');
+const [sendMessage, setSendMessage] = useState('');
+const [userName, setUserName] = useState('');
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19,18 +25,11 @@ export const Room = () => {
       user: userName,
       time: db.Timestamp(),
     });
-    setSetMessage('');
+    setSendMessage('');
   };
 
+  
   const Join = () => {
-    // const AddRoom = async () => {
-    //   let res = await addDoc(allRoomRef, { Name: roomName });
-    //   setroomId(res.id);
-    // };
-
-    
-    
-
     const AddRoomPromise = async () => {
       await new Promise((resolve) => {
         let res = addDoc(allRoomRef, { Name: roomName });
@@ -40,7 +39,8 @@ export const Room = () => {
         setroomId(val.id)
       }).then(() => {
         SetRoom();
-        console.log(roomRef)
+      }).then(() => {
+        console.log(roomId);
       })
     }
     const SetRoom = async () => {
@@ -52,10 +52,8 @@ export const Room = () => {
     console.log(!roomId && roomId === "")
 
     if (!roomId && roomId === "") {
-      AddRoomPromise();
+      AddRoomPromise(); // Firestoreのroomsに追加する
     }
-
-    // SetRoom();
 
     const JoinRoom = () => {
       useEffect(() => {
@@ -74,6 +72,7 @@ export const Room = () => {
 
   return (
     <div>
+    <div>
       <TextField
         value={roomName}
         onChange={(e) => {
@@ -83,52 +82,15 @@ export const Room = () => {
         variant='filled'
       ></TextField>
       <button onClick={Join}>Join</button>
+      </div>
+      <div>
+        <TextField value={sendMessage}
+          onChange={(e) => { setSendMessage(e.target.value); }}
+          variant='filled'></TextField>
+        <button onClick={handleSubmit}>Submit</button>
+        </div>
     </div>
   );
 };
 
 export default Room;
-
-// export default class joinRoom extends React.Component {
-//   constructor(props) {
-//     super(props);
-//     var rooms = collection(db, 'rooms');
-//     this.state = {
-//       roomName: '',
-//     };
-//   }
-
-//   joinRoom = (props) => {
-//     let roomRef;
-
-//     if (!!props.roomName) {
-//     } else {
-//       let newRoom = {
-//         Name: props.roomName,
-//       };
-
-//       setDoc(roomRef, newRoom);
-//     }
-//   };
-
-//   roomNameChange = (event) => {
-//     this.setState({
-//       [event.target.name]: event.target.value,
-//     });
-//   };
-
-//   render() {
-//     return (
-//       <div>
-//         <TextField
-//           name='roomName'
-//           value={this.state.roomName}
-//           onChange={this.roomNameChange}
-//         />
-//         <button onClick={this.joinRoom(this.state.roomName)}>
-//           Join or Create
-//         </button>
-//       </div>
-//     );
-//   }
-// }
