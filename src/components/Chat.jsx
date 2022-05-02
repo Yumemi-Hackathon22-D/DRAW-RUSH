@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import db from '../firebase/index';
-import { collection, doc, setDoc, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { TextField } from '@mui/material';
 
 
@@ -18,9 +18,14 @@ const [sendMessage, setSendMessage] = useState('');
 const [userName, setUserName] = useState('');
 
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    addDoc(collection(roomRef), { userName: userName, msg: sendMessage });
+    const messageRef = doc(roomRef, 'messages');
+    // await addDoc(messageRef, {
+    //   userName: userName,
+    //   msg: sendMessage,
+    //   timeStamp: serverTimestamp()
+    // });
     setSendMessage('');
   };
 
@@ -53,6 +58,8 @@ const [userName, setUserName] = useState('');
         AddRoomPromise(); // Firestoreのroomsに追加する
       }).then(() => {
         SetRoom(); // 部屋設定を変更する
+      }).then(() => {
+        setUserName("Yoooooshikaw");
       })
     }
 
