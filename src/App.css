@@ -36,3 +36,57 @@
     transform: rotate(360deg);
   }
 }
+
+
+@font-face {
+  /*https://github.com/keshikan/DSEG*/
+  font-family: '7Seg';
+  src: url('DSEG7Modern-BoldItalic.woff2') format('woff2');
+}
+.timer{
+  font-family: '7Seg', serif;
+  font-size: xxx-large;
+}
+
+
+
+.canvas{
+  border: solid;
+  touch-action: none;
+  background: white;
+  width: 65%;
+  aspect-ratio: auto 16/9;
+
+}
+.blocker{
+  border: solid;
+  position: absolute;
+  width: 65%;
+  aspect-ratio: auto 16/9;
+  background: lightgray;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+
+}
+
+/* デフォルト：980px以上用（PC用）の記述 */
+@media screen and (max-width: 979px) {
+  /* 979px以下用（タブレット用）の記述 */
+}
+@media screen and (max-width: 767px) {
+  /* 767px以下用（タブレット／スマートフォン用）の記述 */
+}
+@media screen and (max-width: 800px) {
+  .canvas{
+  width: 95%;
+
+}
+  .blocker{
+    width: 95%;
+
+  } /* 479px以下用（スマートフォン用）の記述 */
+}
