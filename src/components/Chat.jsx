@@ -1,9 +1,9 @@
 import React, {useState, useEffect} from 'react';
 import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
-import {collection, doc, addDoc, getDoc} from 'firebase/firestore';
+import {collection, doc, addDoc, getDoc, onSnapshot} from 'firebase/firestore';
 import {TextField, Button, IconButton, InputAdornment} from '@mui/material';
-import { Send } from '@mui/icons-material/'
+import {Send} from '@mui/icons-material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import CheckIcon from '@mui/icons-material/Check'
 
@@ -16,22 +16,26 @@ export const Room = () => {
     const [roomId, setroomId] = useState('');
     const [messages, setMessages] = useState('');
     const [sendMessage, setSendMessage] = useState('');
-  const [userName, setUserName] = useState('');
-  const [isCopied, setIsCopied] = useState(false);
-  
+    const [userName, setUserName] = useState('');
+    const [userId, setUserID] = useState('');
+    const [firestoreListener, setFirestoreListener] = useState({});
+    const [isCopied, setIsCopied] = useState(false);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const messageRef = push(ref(db, 'rooms/' + roomId + '/messages/'), {
-            userName: userName,
+            userId: userId,
             msg: sendMessage,
             timeStamp: serverTimestamp()
         });
         setSendMessage('');
     };
 
-    const Checked= async() => {
+    const Checked = async () => {
         setIsCopied(true);
-        setTimeout(() => {setIsCopied(false)},1000)
+        setTimeout(() => {
+            setIsCopied(false)
+        }, 1000)
     }
     const ShowChat = () => {
         let result = [];
@@ -39,7 +43,7 @@ export const Room = () => {
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
-                    <th>{i.userName}</th>
+                    <th>{i.userId}</th>
                     <td>{i.msg}</td>
                     <td>{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</td>
                 </tr>
@@ -78,10 +82,17 @@ export const Room = () => {
             return res.id
         }
         const SetRoom = async (roomId) => {
-            roomRef = await doc(allRoomRef, roomId);
-            await addDoc(collection(roomRef, "/members/"), {
+            roomRef =await  doc(allRoomRef, roomId);
+            const l=  onSnapshot(collection(roomRef, "/members/"), (doc) => {
+                console.log(doc.data());
+            })
+
+            setFirestoreListener(l);
+            const userRef = await addDoc(collection(roomRef, "/members/"), {
                 name: userName
             });
+            setUserID(userRef.id);
+
         }
 
         const JoinRoom = async () => {
@@ -91,6 +102,7 @@ export const Room = () => {
         }
 
         JoinRoom().then((id) => {
+
             JoinChat(id);
             setIsJoined(true);
         })
@@ -116,7 +128,7 @@ export const Room = () => {
         <div>
             <div>
                 <TextField
-                    disabled = {isJoined}
+                    disabled={isJoined}
                     value={roomName}
                     onChange={(e) => {
                         tmproomName = e.target.value;
@@ -129,8 +141,8 @@ export const Room = () => {
                            label='ユーザー名'
                            onChange={(e) => setUserName(e.target.value)}
                            variant='filled'></TextField>
-                {isJoined ? <Button variant="contained" color="error" onClick={Left}>Left</Button>:
-                <Button variant="contained" onClick={Join}>Join</Button>}
+                {isJoined ? <Button variant="contained" color="error" onClick={Left}>Left</Button> :
+                    <Button variant="contained" onClick={Join}>Join</Button>}
             </div>
             {isJoined ? <>
 
@@ -138,26 +150,27 @@ export const Room = () => {
                 <div>
                     <TextField value={sendMessage}
                                onChange={(e) => {
-                                 setSendMessage(e.target.value);
+                                   setSendMessage(e.target.value);
                                }}
-                               variant='filled' InputProps={{ endAdornment:
-                                <InputAdornment position="end">
-                                    <IconButton
-                                        onClick={handleSubmit}
-                                        edge="end"
-                                        color="primary"
-                                        disabled={sendMessage===""}
-                                    >
-                                        {<Send />}
-                                    </IconButton>
-                                </InputAdornment>
-                            }}></TextField>
-          </div>
-          <div><span>この部屋のID: { roomId }
-          <IconButton aria-label="copy" onClick={() => {
-              navigator.clipboard.writeText(roomId)
-              Checked();
-              }}> {!isCopied ? <ContentCopyIcon/>: <CheckIcon/>}</IconButton></span></div>
+                               variant='filled' InputProps={{
+                        endAdornment:
+                            <InputAdornment position="end">
+                                <IconButton
+                                    onClick={handleSubmit}
+                                    edge="end"
+                                    color="primary"
+                                    disabled={sendMessage === ""}
+                                >
+                                    {<Send/>}
+                                </IconButton>
+                            </InputAdornment>
+                    }}></TextField>
+                </div>
+                <div><span>この部屋のID: {roomId}
+                    <IconButton aria-label="copy" onClick={() => {
+                        navigator.clipboard.writeText(roomId)
+                        Checked();
+                    }}> {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}</IconButton></span></div>
                 <ShowChat></ShowChat></> : <></>}
 
         </div>
