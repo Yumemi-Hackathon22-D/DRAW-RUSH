@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
 import {collection, doc, addDoc, getDoc, onSnapshot} from 'firebase/firestore';
@@ -18,7 +18,8 @@ export const Room = () => {
     const [sendMessage, setSendMessage] = useState('');
     const [userName, setUserName] = useState('');
     const [userId, setUserID] = useState('');
-    const [firestoreListener, setFirestoreListener] = useState({});
+    const [userDictionary, setUserDictionary] = useState({});
+    //const [firestoreListener, setFirestoreListener] = useState({});
     const [isCopied, setIsCopied] = useState(false);
 
     const handleSubmit = async (e) => {
@@ -43,7 +44,7 @@ export const Room = () => {
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
-                    <th>{i.userId}</th>
+                    <th>{userDictionary[i.userId]}</th>
                     <td>{i.msg}</td>
                     <td>{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</td>
                 </tr>
@@ -83,17 +84,7 @@ export const Room = () => {
         }
         const SetRoom = async (roomId) => {
             roomRef = await doc(allRoomRef, roomId);
-            const l = onSnapshot(roomRef, (doc) => {
-                for(let i of doc.docChanges()) {
-                    if(i.type === "added"){
-                        console.log(i);
-                    }
-                    else console.log(i);
-                    // 処理追加 Ref: https://qiita.com/mktu/items/17a993f675ccd6d17aed
-                }
-            })
 
-            setFirestoreListener(l);
             const userRef = await addDoc(collection(roomRef, "/members/"), {
                 name: userName
             });
@@ -108,6 +99,20 @@ export const Room = () => {
         }
 
         JoinRoom().then((id) => {
+
+            const q = collection( doc(allRoomRef, id), "/members/");
+            onSnapshot(q, {
+                next:(querySnapshot) => {
+
+                    let tmp={}
+                    querySnapshot.forEach((doc) => {
+                        console.log(doc.id)
+                        console.log(doc.data())
+                        tmp[doc.id]=doc.data().name
+                    });
+                    setUserDictionary(tmp)
+                }
+            })
 
             JoinChat(id);
             setIsJoined(true);
