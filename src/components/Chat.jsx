@@ -50,9 +50,12 @@ export const Room = () => {
       if (!docSnap.exists()) {
         let Id = await AddRoomPromise();
         setroomId(Id)
+          return Id
       }
-      else setroomId(roomName)
-      return roomId;
+      else {
+          setroomId(roomName)
+          return roomName
+      }
     }
 
     
@@ -65,11 +68,12 @@ export const Room = () => {
             return res.id
         }
         const SetRoom = async (roomId) => {
+
             roomRef = await doc(allRoomRef, roomId);
         }
     
     const Room = async () => {
-                let id = await CheckRoom(roomId);
+                let id = await CheckRoom();
                 await SetRoom(id);
                 return id;
     }
