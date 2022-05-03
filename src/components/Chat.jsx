@@ -11,7 +11,7 @@ import CheckIcon from '@mui/icons-material/Check'
 
 const GameState = {//enum風
     WAIT_MORE_MEMBER: "waitMember",//独りぼっち　さみしい
-
+    WAIT_START:"waitStart",//スタート待ち
     DRAW: "draw",//お絵描き中、画像アップロード待ち
     CHAT: "chat",//話し合い中
     CHECK_ANSWER: "checkAnswer",//答え合わせ
@@ -24,7 +24,8 @@ export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
     let roomRef;
     let tmproomName;
-    const [painter, setPainter] = useState('');
+    const gameState  = useRef/*<GameState>*/("");
+    const painter= useRef('');
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
     const roomId = useRef('');
@@ -34,10 +35,10 @@ export const Room = () => {
     const [userName, setUserName] = useState('');
     const [cookie, setCookie, removeCookie] = useCookies();
     const [userDictionary, setUserDictionary] = useState({});
-    const [gameState, setGameState] = useState/*<GameState>*/("");
     const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
 
+    const isPainter=painter.current===userId.current&&painter.current!==""
     const SetRoomID = (value) => {
         roomId.current = value
         setCookie("roomId", value)
@@ -57,9 +58,12 @@ export const Room = () => {
     }, [])
     //ゲームの進行状態を監視
     useEffect(() => {
-        console.log(gameState)
-        switch (gameState) {
+        console.log(gameState.current)
+        switch (gameState.current) {
             case GameState.WAIT_MORE_MEMBER: {
+                break;
+            }
+            case GameState.WAIT_START:{
                 break;
             }
             case GameState.DRAW: {
@@ -80,7 +84,7 @@ export const Room = () => {
             default :
                 break;
         }
-    }, [gameState])
+    }, [gameState.current])
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -161,7 +165,7 @@ export const Room = () => {
             }
             if (createSelf) {
                 await updateDoc(roomRef, {Painter: userId.current});
-                setPainter(userId.current);
+                painter.current=userId.current;
             }
 
         }
@@ -195,7 +199,7 @@ export const Room = () => {
                             setUserDictionary(tmp)
 
                             const Alone = async () => {
-                                if (painter !== userId.current) {
+                                if (painter.current !== userId.current) {
                                     await updateDoc(roomRef, {Painter: userId.current}).then(() => {
                                         //setPainter(userId.userId)
                                     });
@@ -208,11 +212,11 @@ export const Room = () => {
                                 Alone()
                             } else {
                                 console.log(tmp)
-                                console.log(gameState)
-                                console.log(painter)
+                                console.log(gameState.current)
+                                console.log(painter.current)
                                 console.log(userId.current)
-                                if (gameState === GameState.WAIT_MORE_MEMBER && painter === userId.current) {
-                                    SetGameStateAsync(GameState.DRAW);
+                                if (gameState.current === GameState.WAIT_MORE_MEMBER && painter.current === userId.current) {
+                                    SetGameStateAsync(GameState.WAIT_START);
                                 }
 
                             }
@@ -226,8 +230,8 @@ export const Room = () => {
                         next: (doc) => {
                             const data = doc.data()
                             console.log(data);
-                            setGameState(data.State);
-                            setPainter(data.Painter);
+                            gameState.current=data.State;
+                            painter.current=(data.Painter);
                         }
                     })
                 );
