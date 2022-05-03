@@ -2,7 +2,9 @@ import React, {useState, useEffect} from 'react';
 import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
 import {collection, doc, addDoc, getDoc} from 'firebase/firestore';
-import {TextField} from '@mui/material';
+import {TextField, Button, IconButton} from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import CheckIcon from '@mui/icons-material/Check';
 
 
 export const Room = () => {
@@ -15,6 +17,7 @@ export const Room = () => {
     const [messages, setMessages] = useState('');
     const [sendMessage, setSendMessage] = useState('');
   const [userName, setUserName] = useState('');
+  const [isCopied, setIsCopied] = useState(false);
   
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -25,6 +28,11 @@ export const Room = () => {
         });
         setSendMessage('');
     };
+
+    const Checked= async() => {
+        setIsCopied(true);
+        setTimeout(() => {setIsCopied(false)},1000)
+    }
     const ShowChat = () => {
       let result = [];
       if (messages === null) return;
@@ -103,15 +111,17 @@ export const Room = () => {
         <div>
             <div>
                 <TextField
+                    disabled = {isJoined}
                     value={roomName}
             onChange={(e) => {
               tmproomName = e.target.value;
               setroomName(e.target.value);
                     }}
-                    label='ルーム名'
+                    label='ルーム名/ID'
                     variant='filled'
                 ></TextField>
-                {isJoined ? <button onClick={Left}>Left</button>:<button onClick={Join}>Join</button>}
+                {isJoined ? <Button variant="contained" color="error" onClick={Left}>Left</Button>:
+                <Button variant="contained" onClick={Join}>Join</Button>}
             </div>
             {isJoined ? <>
                 <div>
@@ -122,12 +132,15 @@ export const Room = () => {
                     <TextField value={sendMessage}
                                onChange={(e) => {
                                  setSendMessage(e.target.value);
-                          
                                }}
                                variant='filled'></TextField>
-                    <button onClick={handleSubmit}>Submit</button>
+                    <Button variant="contained" color="success" onClick={handleSubmit}>Submit</Button>
           </div>
-          <div><p>この部屋のID: { roomId }</p></div>
+          <div><p>この部屋のID: { roomId }</p>
+          <IconButton aria-label="copy" onClick={() => {
+              navigator.clipboard.writeText(roomId)
+              Checked();
+              }}> {!isCopied ? <ContentCopyIcon/>: <CheckIcon/>}</IconButton></div>
                 <ShowChat></ShowChat></> : <></>}
 
         </div>
