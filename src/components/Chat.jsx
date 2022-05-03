@@ -83,7 +83,7 @@ export const Room = () => {
         }
         const SetRoom = async (roomId) => {
             roomRef =await  doc(allRoomRef, roomId);
-            const l=  onSnapshot(collection(roomRef, "/members/"), (doc) => {
+            const l=  onSnapshot(roomRef, (doc) => {
                 console.log(doc.data());
             })
 
