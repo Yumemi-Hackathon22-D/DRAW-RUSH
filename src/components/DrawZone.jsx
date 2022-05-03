@@ -1,8 +1,6 @@
 import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import {Button, Typography} from "@mui/material";
 import {PlayCircleOutline} from "@mui/icons-material";
-import {storage} from "../firebase";
-import { ref, uploadString } from "firebase/storage";
 import * as React from "react"
 const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
@@ -133,13 +131,9 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
             setTime(timeRef.current-0.1)
             if (timeRef.current-0.1<= 0) {
                 setBeforeStart(true);
-                const storageRef = ref(storage,'image.jpg');
                 const imageDataUrl=canvasRef.current?.toDataURL("image/jpeg",0);
                 console.log(imageDataUrl);
-                // Data URL string
-                uploadString(storageRef, imageDataUrl, 'data_url').then((snapshot) => {
-                    console.log('Uploaded a data_url string!');
-                });
+                props.onDrawEnd(imageDataUrl);
                 clear();
                 clearInterval(timer);
             }

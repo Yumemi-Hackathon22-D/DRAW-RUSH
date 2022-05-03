@@ -1,6 +1,7 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useCookies} from 'react-cookie';
-import {firestore, db} from '../firebase/index';
+import {firestore, db, storage} from '../firebase/index';
+import {ref as storageRef} from 'firebase/storage'
 import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
 import {collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc} from 'firebase/firestore';
 import {TextField, Button, IconButton, InputAdornment} from '@mui/material';
@@ -8,12 +9,12 @@ import {Send} from '@mui/icons-material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import CheckIcon from '@mui/icons-material/Check'
 import DrawZone from "./DrawZone";
-
+import {uploadString} from "firebase/storage";
 
 const GameState = {//enum風
     WAIT_MORE_MEMBER: "waitMember",//独りぼっち　さみしい
 
-    WAIT_START:"waitStart",//スタート待ち
+    WAIT_START: "waitStart",//スタート待ち
     DRAW: "draw",//お絵描き中、画像アップロード待ち
     CHAT: "chat",//話し合い中
     CHECK_ANSWER: "checkAnswer",//答え合わせ
@@ -25,9 +26,8 @@ const GameState = {//enum風
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
     let roomRef;
-    let tmproomName;
-    const gameState  = useRef/*<GameState>*/("");
-    const painter= useRef('');
+    const gameState = useRef/*<GameState>*/("");
+    const painter = useRef('');
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
     const roomId = useRef('');
@@ -40,7 +40,7 @@ export const Room = () => {
     const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
 
-    const isPainter=painter.current===userId.current&&painter.current!==""
+    const isPainter = painter.current === userId.current && painter.current !== ""
     const SetRoomID = (value) => {
         roomId.current = value
         setCookie("roomId", value)
@@ -53,7 +53,6 @@ export const Room = () => {
         if (cookie.userId && cookie.roomId) {
             roomId.current =
                 cookie.roomId
-
             userId.current = cookie.userId
             Join()
         }
@@ -121,7 +120,11 @@ export const Room = () => {
         </table>);
 
     }
-
+    const SetGameStateAsync = async (state) => {
+        await updateDoc(roomRef, {State: state}).then(() => {
+            //setGameState(state)
+        });
+    }
     const Join = () => {
         let createSelf = false;
         if ((userName === "" || roomName === "") && (!cookie.userId && !cookie.roomId)) {
@@ -162,7 +165,6 @@ export const Room = () => {
                 const userRef = await addDoc(collection(roomRef, "/members/"), {
                     name: userName
                 });
-
                 SetUserId(userRef.id)
             }
             if (createSelf) {//自分が作成者ならPainterを自分に
@@ -171,11 +173,7 @@ export const Room = () => {
             }
 
         }
-        const SetGameStateAsync = async (state) => {
-            await updateDoc(roomRef, {State: state}).then(() => {
-                //setGameState(state)
-            });
-        }
+
         const JoinRoom = async () => {
             let id = await CheckRoom();
             await SetRoom(id);
@@ -265,7 +263,6 @@ export const Room = () => {
                     disabled={isJoined}
                     value={roomName}
                     onChange={(e) => {
-                        tmproomName = e.target.value;
                         setroomName(e.target.value);
                     }}
                     label='ルーム名/ID'
@@ -306,8 +303,16 @@ export const Room = () => {
                         Checked();
                     }}> {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}</IconButton></span></div>
                 <ShowChat></ShowChat></> : <></>}
-            {isPainter&&
-                <DrawZone penRadius={5} odai={"くるま！！！！"}/>
+            {isPainter &&
+                <DrawZone penRadius={5} odai={"くるま！！！！"} onDrawEnd={(imageDataUrl) => {
+
+                    const storageReference = storageRef(storage, roomId + '.jpg');
+                    // Data URL string
+                    uploadString(storageReference, imageDataUrl, 'data_url').then((snapshot) => {
+                        SetGameStateAsync(GameState.CHAT);
+                    });
+                }
+                }/>
             }
 
         </div>
