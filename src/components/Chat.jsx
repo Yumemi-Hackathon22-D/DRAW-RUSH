@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {useCookies} from 'react-cookie';
 import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
@@ -20,7 +20,7 @@ export const Room = () => {
     const [userName, setUserName] = useState('');
     const [userId, setUserID, removeUserID] = useCookies();
     const [userDictionary, setUserDictionary] = useState({});
-    //const [firestoreListener, setFirestoreListener] = useState({});
+    const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
 
     const handleSubmit = async (e) => {
@@ -45,7 +45,7 @@ export const Room = () => {
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
-                    <th>{userDictionary[i.userId]||"Unknown太郎"}</th>
+                    <th>{userDictionary[i.userId] || "Unknown太郎"}</th>
                     <td>{i.msg}</td>
                     <td>{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</td>
                 </tr>
@@ -102,20 +102,31 @@ export const Room = () => {
         }
 
         JoinRoom().then((id) => {
+            const roomDoc = doc(allRoomRef, id)
+            const q = collection(roomDoc, "/members/");
 
-            const q = collection(doc(allRoomRef, id), "/members/");
-            onSnapshot(q, {
-                next: (querySnapshot) => {
 
-                    let tmp = {}
-                    querySnapshot.forEach((doc) => {
-                        console.log(doc.id)
+            firestoreListenersRef.current.push(
+                onSnapshot(q, {
+                    next: (querySnapshot) => {
+                        let tmp = {}
+                        querySnapshot.forEach((doc) => {
+
+                            console.log(doc.id)
+                            console.log(doc.data())
+                            tmp[doc.id] = doc.data().name
+                        });
+                        setUserDictionary(tmp)
+                    }
+                })
+            );
+            firestoreListenersRef.current.push(
+                onSnapshot(roomDoc, {
+                    next: (doc) => {
                         console.log(doc.data())
-                        tmp[doc.id] = doc.data().name
-                    });
-                    setUserDictionary(tmp)
-                }
-            })
+                    }
+                })
+            );
 
             JoinChat(id);
             setIsJoined(true);
@@ -135,6 +146,10 @@ export const Room = () => {
     const Left = () => {
         const Ref = ref(db, 'rooms/' + roomId + '/messages');
         off(Ref);
+        firestoreListenersRef.current.forEach((l)=>{
+            l();
+        });
+        removeUserID("userId");
         setIsJoined(false);
     }
 
