@@ -7,10 +7,12 @@ import {TextField, Button, IconButton, InputAdornment} from '@mui/material';
 import {Send} from '@mui/icons-material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import CheckIcon from '@mui/icons-material/Check'
+import DrawZone from "./DrawZone";
 
 
 const GameState = {//enum風
     WAIT_MORE_MEMBER: "waitMember",//独りぼっち　さみしい
+
     WAIT_START:"waitStart",//スタート待ち
     DRAW: "draw",//お絵描き中、画像アップロード待ち
     CHAT: "chat",//話し合い中
@@ -185,7 +187,16 @@ export const Room = () => {
                 const roomDoc = doc(allRoomRef, id)//Not
                 const q = collection(roomDoc, "/members/");
 
-
+                firestoreListenersRef.current.push(
+                    onSnapshot(roomDoc, {
+                        next: (doc) => {
+                            const data = doc.data()
+                            console.log(data);
+                            gameState.current=data.State;
+                            painter.current=(data.Painter);
+                        }
+                    })
+                );
                 firestoreListenersRef.current.push(
                     onSnapshot(q, {
                         next: (querySnapshot) => {
@@ -225,16 +236,7 @@ export const Room = () => {
                         }
                     })
                 );
-                firestoreListenersRef.current.push(
-                    onSnapshot(roomDoc, {
-                        next: (doc) => {
-                            const data = doc.data()
-                            console.log(data);
-                            gameState.current=data.State;
-                            painter.current=(data.Painter);
-                        }
-                    })
-                );
+
 
                 JoinChat(id);
                 setIsJoined(true);
@@ -313,6 +315,9 @@ export const Room = () => {
                         Checked();
                     }}> {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}</IconButton></span></div>
                 <ShowChat></ShowChat></> : <></>}
+            {isPainter&&
+                <DrawZone penRadius={5} odai={"くるま！！！！"}/>
+            }
 
         </div>
     );
