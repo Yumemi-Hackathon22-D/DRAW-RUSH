@@ -2,15 +2,15 @@ import React, {useState, useEffect} from 'react';
 import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
 import {collection, doc, addDoc, getDoc} from 'firebase/firestore';
-import {TextField, Button, IconButton} from '@mui/material';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import CheckIcon from '@mui/icons-material/Check';
-
+import {TextField, Button, IconButton, InputAdornment} from '@mui/material';
+import { Send} from '@mui/icons-material/'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import CheckIcon from '@mui/icons-material/Check'
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-  let roomRef;
-  let tmproomName;
+    let roomRef;
+    let tmproomName;
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
     const [roomId, setroomId] = useState('');
@@ -34,8 +34,8 @@ export const Room = () => {
         setTimeout(() => {setIsCopied(false)},1000)
     }
     const ShowChat = () => {
-      let result = [];
-      if (messages === null) return;
+        let result = [];
+        if (messages === null) return;
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
@@ -49,26 +49,28 @@ export const Room = () => {
             <tbody>{result}</tbody>
         </table>);
 
-  }
-  
-  const Join = () => {
-    const CheckRoom = async () => {
-      let Ref = await doc(allRoomRef, roomName);
-      let docSnap = await getDoc(Ref);
-      if (!docSnap.exists()) {
-        let Id = await AddRoomPromise();
-        setroomId(Id)
-          return Id
-      }
-      else {
-          setroomId(roomName)
-          return roomName
-      }
     }
 
-    
-    
-        const AddRoomPromise = async () => {
+    const Join = () => {
+        if (userName === "" || roomName === "") {
+            alert("ルーム名とユーザー名を入力してください")
+            return
+        }
+        const CheckRoom = async () => {
+            let Ref = await doc(allRoomRef, roomName);
+            let docSnap = await getDoc(Ref);
+            if (!docSnap.exists()) {
+                let Id = await CreateRoom();
+                setroomId(Id)
+                return Id
+            } else {
+                setroomId(roomName)
+                return roomName
+            }
+        }
+
+
+        const CreateRoom = async () => {
             let res = await addDoc(allRoomRef, {Name: roomName});
             setroomId(res.id);
             await set(ref(db, 'rooms/' + res.id), {messages: ""});
@@ -77,18 +79,21 @@ export const Room = () => {
         }
         const SetRoom = async (roomId) => {
             roomRef = await doc(allRoomRef, roomId);
+            await addDoc(collection(roomRef, "/members/"), {
+                name: userName
+            });
         }
-    
-    const Room = async () => {
-                let id = await CheckRoom();
-                await SetRoom(id);
-                return id;
-    }
 
-            Room().then((id) => {
-                JoinChat(id)
-                setIsJoined(true)
-            })
+        const JoinRoom = async () => {
+            let id = await CheckRoom();
+            await SetRoom(id);
+            return id;
+        }
+
+        JoinRoom().then((id) => {
+            JoinChat(id);
+            setIsJoined(true);
+        })
 
         const JoinChat = (id) => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
@@ -97,12 +102,12 @@ export const Room = () => {
                 let selfmessages = snapshot.val();
                 setMessages(selfmessages);
             })
-    }
+        }
 
-    
+
     };
     const Left = () => {
-        const Ref = ref(db, 'rooms/'+ roomId + '/messages');
+        const Ref = ref(db, 'rooms/' + roomId + '/messages');
         off(Ref);
         setIsJoined(false);
     }
@@ -113,28 +118,40 @@ export const Room = () => {
                 <TextField
                     disabled = {isJoined}
                     value={roomName}
-            onChange={(e) => {
-              tmproomName = e.target.value;
-              setroomName(e.target.value);
+                    onChange={(e) => {
+                        tmproomName = e.target.value;
+                        setroomName(e.target.value);
                     }}
                     label='ルーム名/ID'
                     variant='filled'
                 ></TextField>
+                <TextField value={userName} disabled={isJoined}
+                           label='ユーザー名'
+                           onChange={(e) => setUserName(e.target.value)}
+                           variant='filled'></TextField>
                 {isJoined ? <Button variant="contained" color="error" onClick={Left}>Left</Button>:
                 <Button variant="contained" onClick={Join}>Join</Button>}
             </div>
             {isJoined ? <>
+
+
                 <div>
-                    <TextField value={userName}
-                               label='ユーザー名'
-                               onChange={(e) => setUserName(e.target.value)}
-                               variant='filled'></TextField>
                     <TextField value={sendMessage}
                                onChange={(e) => {
                                  setSendMessage(e.target.value);
                                }}
-                               variant='filled'></TextField>
-                    <Button variant="contained" color="success" onClick={handleSubmit}>Submit</Button>
+                               variant='filled' InputProps={{ endAdornment:
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        onClick={handleSubmit}
+                                        edge="end"
+                                        color="primary"
+                                        disabled={sendMessage===""}
+                                    >
+                                        {<Send />}
+                                    </IconButton>
+                                </InputAdornment>
+                            }}></TextField>
           </div>
           <div><p>この部屋のID: { roomId }</p>
           <IconButton aria-label="copy" onClick={() => {
