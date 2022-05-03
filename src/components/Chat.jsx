@@ -3,7 +3,7 @@ import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
 import {collection, doc, addDoc, getDoc} from 'firebase/firestore';
 import {TextField, Button, IconButton, InputAdornment} from '@mui/material';
-import { Send} from '@mui/icons-material/'
+import { Send } from '@mui/icons-material/'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import CheckIcon from '@mui/icons-material/Check'
 
@@ -153,11 +153,11 @@ export const Room = () => {
                                 </InputAdornment>
                             }}></TextField>
           </div>
-          <div><p>この部屋のID: { roomId }</p>
+          <div><span>この部屋のID: { roomId }
           <IconButton aria-label="copy" onClick={() => {
               navigator.clipboard.writeText(roomId)
               Checked();
-              }}> {!isCopied ? <ContentCopyIcon/>: <CheckIcon/>}</IconButton></div>
+              }}> {!isCopied ? <ContentCopyIcon/>: <CheckIcon/>}</IconButton></span></div>
                 <ShowChat></ShowChat></> : <></>}
 
         </div>
