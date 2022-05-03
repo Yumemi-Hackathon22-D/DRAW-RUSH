@@ -1,6 +1,6 @@
 import React, {useState, useEffect} from 'react';
 import {firestore, db} from '../firebase/index';
-import {ref, push, set, serverTimestamp, onValue} from 'firebase/database';
+import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
 import {collection, doc, addDoc, getDoc} from 'firebase/firestore';
 import {TextField} from '@mui/material';
 
@@ -68,7 +68,6 @@ export const Room = () => {
             return res.id
         }
         const SetRoom = async (roomId) => {
-
             roomRef = await doc(allRoomRef, roomId);
         }
     
@@ -91,7 +90,14 @@ export const Room = () => {
                 setMessages(selfmessages);
             })
     }
+
+    
     };
+    const Left = () => {
+        const Ref = ref(db, 'rooms/'+ roomId + '/messages');
+        off(Ref);
+        setIsJoined(false);
+    }
 
     return (
         <div>
@@ -105,7 +111,7 @@ export const Room = () => {
                     label='ルーム名'
                     variant='filled'
                 ></TextField>
-                <button onClick={Join}>Join</button>
+                {isJoined ? <button onClick={Left}>Left</button>:<button onClick={Join}>Join</button>}
             </div>
             {isJoined ? <>
                 <div>
