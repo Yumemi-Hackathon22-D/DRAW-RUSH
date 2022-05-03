@@ -82,9 +82,15 @@ export const Room = () => {
             return res.id
         }
         const SetRoom = async (roomId) => {
-            roomRef =await  doc(allRoomRef, roomId);
-            const l=  onSnapshot(roomRef, (doc) => {
-                console.log(doc.data());
+            roomRef = await doc(allRoomRef, roomId);
+            const l = onSnapshot(roomRef, (doc) => {
+                for(let i of doc.docChanges()) {
+                    if(i.type === "added"){
+                        console.log(i);
+                    }
+                    else console.log(i);
+                    // 処理追加 Ref: https://qiita.com/mktu/items/17a993f675ccd6d17aed
+                }
             })
 
             setFirestoreListener(l);
