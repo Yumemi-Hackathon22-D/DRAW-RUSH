@@ -49,7 +49,7 @@ export const Room = () => {
         userId.current = value
         setCookie("userId", value)
     }
-    useEffect(() => {
+    useEffect(() => {//Cookieの管理 Cookieがあれば入り直す
         if (cookie.userId && cookie.roomId) {
             roomId.current =
                 cookie.roomId
@@ -65,7 +65,7 @@ export const Room = () => {
             case GameState.WAIT_MORE_MEMBER: {
                 break;
             }
-            case GameState.WAIT_START:{
+            case GameState.WAIT_START: {
                 break;
             }
             case GameState.DRAW: {
@@ -128,7 +128,7 @@ export const Room = () => {
             alert("ルーム名かユーザー名を入力してください")
             return
         }
-        const CheckRoom = async () => {
+        const CheckRoom = async () => {//Cookieから取り出す
             let rN = roomName;
             if (rN === '') {
                 rN = roomId.current
@@ -137,10 +137,10 @@ export const Room = () => {
             let docSnap = await getDoc(Ref);
             if (!docSnap.exists()) {
                 let Id = await CreateRoom();
-                SetRoomID(Id)
+                SetRoomID(Id);
                 return Id
             } else {
-                SetRoomID(rN)
+                SetRoomID(rN);
                 return rN
             }
         }
@@ -148,7 +148,7 @@ export const Room = () => {
 
         const CreateRoom = async () => {
             let res = await addDoc(allRoomRef, {Name: roomName});
-            SetRoomID(res.id)
+            SetRoomID(res.id);
             await set(ref(db, 'rooms/' + res.id), {messages: ""});
             console.log(res.id);
             createSelf = true;
@@ -165,9 +165,9 @@ export const Room = () => {
 
                 SetUserId(userRef.id)
             }
-            if (createSelf) {
+            if (createSelf) {//自分が作成者ならPainterを自分に
                 await updateDoc(roomRef, {Painter: userId.current});
-                painter.current=userId.current;
+                painter.current = userId.current;
             }
 
         }
@@ -192,8 +192,8 @@ export const Room = () => {
                         next: (doc) => {
                             const data = doc.data()
                             console.log(data);
-                            gameState.current=data.State;
-                            painter.current=(data.Painter);
+                            gameState.current = data.State;
+                            painter.current = (data.Painter);
                         }
                     })
                 );
@@ -220,24 +220,16 @@ export const Room = () => {
 
 
                             if (Object.keys(tmp).length <= 1) {
-                                Alone()
+                                Alone()//独りぼっちならPainterを自分にかつ状態をWAIT_MORE_MEMBERに
                             } else {
-                                console.log(tmp)
-                                console.log(gameState.current)
-                                console.log(painter.current)
-                                console.log(userId.current)
                                 if (gameState.current === GameState.WAIT_MORE_MEMBER && painter.current === userId.current) {
                                     SetGameStateAsync(GameState.WAIT_START);
                                 }
 
                             }
-
-
                         }
                     })
                 );
-
-
                 JoinChat(id);
                 setIsJoined(true);
             })
@@ -260,7 +252,6 @@ export const Room = () => {
             firestoreListenersRef.current.forEach((l) => {
                 l();
             });
-
             removeCookie("userId");
             removeCookie("roomId");
             setIsJoined(false);
