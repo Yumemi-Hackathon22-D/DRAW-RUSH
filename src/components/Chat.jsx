@@ -2,7 +2,8 @@ import React, {useState, useEffect} from 'react';
 import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
 import {collection, doc, addDoc, getDoc} from 'firebase/firestore';
-import {TextField} from '@mui/material';
+import {IconButton, InputAdornment, TextField} from '@mui/material';
+import {Send} from "@mui/icons-material";
 
 
 export const Room = () => {
@@ -131,8 +132,19 @@ export const Room = () => {
                                    setSendMessage(e.target.value);
 
                                }}
-                               variant='filled'></TextField>
-                    <button onClick={handleSubmit}>Submit</button>
+                               variant='filled'
+                               InputProps={{ endAdornment:
+                                   <InputAdornment position="end">
+                                       <IconButton
+                                           onClick={handleSubmit}
+                                           edge="end"
+                                           color="primary"
+                                           disabled={sendMessage===""}
+                                       >
+                                           {<Send />}
+                                       </IconButton>
+                                   </InputAdornment>
+                               }}></TextField>
                 </div>
                 <div><p>この部屋のID: {roomId}</p></div>
                 <ShowChat></ShowChat></> : <></>}
