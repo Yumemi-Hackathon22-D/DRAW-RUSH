@@ -45,7 +45,7 @@ export const Room = () => {
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
-                    <th>{userDictionary[i.userId]}</th>
+                    <th>{userDictionary[i.userId]||"Unknown太郎"}</th>
                     <td>{i.msg}</td>
                     <td>{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</td>
                 </tr>
@@ -85,12 +85,13 @@ export const Room = () => {
         }
         const SetRoom = async (roomId) => {
             roomRef = await doc(allRoomRef, roomId);
-            if (userId === null || userId === ""){
-            const userRef = await addDoc(collection(roomRef, "/members/"), {
-                name: userName
-            });
-            setUserID("userId", userRef.id);
-        }
+            if (userId === null || userId === "" || !Object.keys(userId).length) {
+                const userRef = await addDoc(collection(roomRef, "/members/"), {
+                    name: userName
+                });
+
+                setUserID("userId", userRef.id);
+            }
 
         }
 
@@ -102,15 +103,15 @@ export const Room = () => {
 
         JoinRoom().then((id) => {
 
-            const q = collection( doc(allRoomRef, id), "/members/");
+            const q = collection(doc(allRoomRef, id), "/members/");
             onSnapshot(q, {
-                next:(querySnapshot) => {
+                next: (querySnapshot) => {
 
-                    let tmp={}
+                    let tmp = {}
                     querySnapshot.forEach((doc) => {
                         console.log(doc.id)
                         console.log(doc.data())
-                        tmp[doc.id]=doc.data().name
+                        tmp[doc.id] = doc.data().name
                     });
                     setUserDictionary(tmp)
                 }
