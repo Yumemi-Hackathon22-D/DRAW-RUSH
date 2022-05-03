@@ -26,7 +26,7 @@ export const Room = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const messageRef = push(ref(db, 'rooms/' + roomId + '/messages/'), {
-            userId: userId,
+            userId: userId.userId,
             msg: sendMessage,
             timeStamp: serverTimestamp()
         });
@@ -89,7 +89,8 @@ export const Room = () => {
             const userRef = await addDoc(collection(roomRef, "/members/"), {
                 name: userName
             });
-            setUserID("userId", userRef.id);}
+            setUserID("userId", userRef.id);
+        }
 
         }
 
