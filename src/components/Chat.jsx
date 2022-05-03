@@ -7,15 +7,15 @@ import {TextField} from '@mui/material';
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-  let roomRef;
-  let tmproomName;
+    let roomRef;
+    let tmproomName;
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
     const [roomId, setroomId] = useState('');
     const [messages, setMessages] = useState('');
     const [sendMessage, setSendMessage] = useState('');
-  const [userName, setUserName] = useState('');
-  
+    const [userName, setUserName] = useState('');
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const messageRef = push(ref(db, 'rooms/' + roomId + '/messages/'), {
@@ -26,8 +26,8 @@ export const Room = () => {
         setSendMessage('');
     };
     const ShowChat = () => {
-      let result = [];
-      if (messages === null) return;
+        let result = [];
+        if (messages === null) return;
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
@@ -41,26 +41,28 @@ export const Room = () => {
             <tbody>{result}</tbody>
         </table>);
 
-  }
-  
-  const Join = () => {
-    const CheckRoom = async () => {
-      let Ref = await doc(allRoomRef, roomName);
-      let docSnap = await getDoc(Ref);
-      if (!docSnap.exists()) {
-        let Id = await AddRoomPromise();
-        setroomId(Id)
-          return Id
-      }
-      else {
-          setroomId(roomName)
-          return roomName
-      }
     }
 
-    
-    
-        const AddRoomPromise = async () => {
+    const Join = () => {
+        if (userName === "" || roomName === "") {
+            alert("ルーム名とユーザー名を入力してください")
+            return
+        }
+        const CheckRoom = async () => {
+            let Ref = await doc(allRoomRef, roomName);
+            let docSnap = await getDoc(Ref);
+            if (!docSnap.exists()) {
+                let Id = await CreateRoom();
+                setroomId(Id)
+                return Id
+            } else {
+                setroomId(roomName)
+                return roomName
+            }
+        }
+
+
+        const CreateRoom = async () => {
             let res = await addDoc(allRoomRef, {Name: roomName});
             setroomId(res.id);
             await set(ref(db, 'rooms/' + res.id), {messages: ""});
@@ -69,18 +71,21 @@ export const Room = () => {
         }
         const SetRoom = async (roomId) => {
             roomRef = await doc(allRoomRef, roomId);
+            await addDoc(collection(roomRef, "/members/"), {
+                name: userName
+            });
         }
-    
-    const Room = async () => {
-                let id = await CheckRoom();
-                await SetRoom(id);
-                return id;
-    }
 
-            Room().then((id) => {
-                JoinChat(id)
-                setIsJoined(true)
-            })
+        const JoinRoom = async () => {
+            let id = await CheckRoom();
+            await SetRoom(id);
+            return id;
+        }
+
+        JoinRoom().then((id) => {
+            JoinChat(id);
+            setIsJoined(true);
+        })
 
         const JoinChat = (id) => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
@@ -89,12 +94,12 @@ export const Room = () => {
                 let selfmessages = snapshot.val();
                 setMessages(selfmessages);
             })
-    }
+        }
 
-    
+
     };
     const Left = () => {
-        const Ref = ref(db, 'rooms/'+ roomId + '/messages');
+        const Ref = ref(db, 'rooms/' + roomId + '/messages');
         off(Ref);
         setIsJoined(false);
     }
@@ -104,30 +109,32 @@ export const Room = () => {
             <div>
                 <TextField
                     value={roomName}
-            onChange={(e) => {
-              tmproomName = e.target.value;
-              setroomName(e.target.value);
+                    onChange={(e) => {
+                        tmproomName = e.target.value;
+                        setroomName(e.target.value);
                     }}
                     label='ルーム名'
-                    variant='filled'
+                    variant='filled' disabled={isJoined}
                 ></TextField>
-                {isJoined ? <button onClick={Left}>Left</button>:<button onClick={Join}>Join</button>}
+                <TextField value={userName} disabled={isJoined}
+                           label='ユーザー名'
+                           onChange={(e) => setUserName(e.target.value)}
+                           variant='filled'></TextField>
+                {isJoined ? <button onClick={Left}>Left</button> : <button onClick={Join}>Join</button>}
             </div>
             {isJoined ? <>
+
+
                 <div>
-                    <TextField value={userName}
-                               label='ユーザー名'
-                               onChange={(e) => setUserName(e.target.value)}
-                               variant='filled'></TextField>
                     <TextField value={sendMessage}
                                onChange={(e) => {
-                                 setSendMessage(e.target.value);
-                          
+                                   setSendMessage(e.target.value);
+
                                }}
                                variant='filled'></TextField>
                     <button onClick={handleSubmit}>Submit</button>
-          </div>
-          <div><p>この部屋のID: { roomId }</p></div>
+                </div>
+                <div><p>この部屋のID: {roomId}</p></div>
                 <ShowChat></ShowChat></> : <></>}
 
         </div>
