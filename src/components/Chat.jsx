@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {useCookies} from 'react-cookie';
 import {firestore, db} from '../firebase/index';
 import {ref, push, set, serverTimestamp, onValue, off} from 'firebase/database';
 import {collection, doc, addDoc, getDoc, onSnapshot} from 'firebase/firestore';
@@ -17,7 +18,7 @@ export const Room = () => {
     const [messages, setMessages] = useState('');
     const [sendMessage, setSendMessage] = useState('');
     const [userName, setUserName] = useState('');
-    const [userId, setUserID] = useState('');
+    const [userId, setUserID, removeUserID] = useCookies();
     const [userDictionary, setUserDictionary] = useState({});
     //const [firestoreListener, setFirestoreListener] = useState({});
     const [isCopied, setIsCopied] = useState(false);
@@ -84,11 +85,11 @@ export const Room = () => {
         }
         const SetRoom = async (roomId) => {
             roomRef = await doc(allRoomRef, roomId);
-
+            if (userId === null || userId === ""){
             const userRef = await addDoc(collection(roomRef, "/members/"), {
                 name: userName
             });
-            setUserID(userRef.id);
+            setUserID("userId", userRef.id);}
 
         }
 
