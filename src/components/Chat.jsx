@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
 import { ref as storageRef } from 'firebase/storage';
-import { ref, push, set, serverTimestamp, onValue, off, } from 'firebase/database';
+import { ref, push, set, serverTimestamp, onValue, off, onChildAdded} from 'firebase/database';
 import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
 import { TextField, Button, IconButton, InputAdornment, Typography } from '@mui/material';
 import { PlayCircleOutline, Send } from '@mui/icons-material';
@@ -280,6 +280,10 @@ export const Room = () => {
 
         const JoinChat = (id) => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
+            onChildAdded(chatRef, (snapshot) => {
+                console.log(snapshot.val());
+                BalloonChat(snapshot.val());
+            })
             onValue(chatRef, (snapshot) => {
                 console.log(snapshot.val());
                 let selfmessages = snapshot.val();
@@ -287,6 +291,9 @@ export const Room = () => {
             });
         };
     }, [roomName, userName]);
+    const BalloonChat = (message) => {
+        
+    }
     const Left = useCallback(() => {
         firestoreListenersRef.current.forEach((l) => {
             l();
