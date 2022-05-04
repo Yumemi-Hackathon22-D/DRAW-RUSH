@@ -1,15 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
-import { ref as storageRef } from 'firebase/storage';
-import { ref, push, set, serverTimestamp, onValue, off, onChildAdded} from 'firebase/database';
+import { ref, push, set, serverTimestamp, onValue, off, onChildAdded } from 'firebase/database';
 import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
 import { TextField, Button, IconButton, InputAdornment, Typography } from '@mui/material';
-import { PlayCircleOutline, Send } from '@mui/icons-material';
+import { Lock, LockOpen, PlayCircleOutline, Send } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DrawZone from './DrawZone';
-import { uploadString } from 'firebase/storage';
+import { ref as storageRef, uploadString, getBlob } from 'firebase/storage';
 import useCacheState from '../CacheState'
 
 const GameState = {
@@ -27,17 +26,8 @@ const GameState = {
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-    /*const [_stateGameState, _stateSetGameState] = useState('');
-    let _tmpGameState = _stateGameState;
-    const setGameState = (value) => {
-        _tmpGameState = value
-        _stateSetGameState(value);
-    }
-    const getGameState = () => {
-        return _tmpGameState;
-    }*/
     //呼び出せる関数はDrawZone.jsxのL14らへんに定義してあります。
-    const drawZoneRef=useRef();
+    const drawZoneRef = useRef();
     const [getGameState, setGameState, stateGameState] = useCacheState('');
     //const painter = useRef('');
     const [getPainter, setPainter, statePainter] = useCacheState('');
@@ -53,6 +43,13 @@ export const Room = () => {
     const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
 
+    const [imgUrl, setImgUrl] = useState('');
+    const [ansLocked, setAnsLocked] = useState(false);
+    const [answer, setAnswer] = useState('');
+    const storageReference = storageRef(
+        storage,
+        roomId.current + '.jpg'
+    );
     const roomRef = useRef();
     const isPainter =
         getPainter() === userId.current && getPainter() !== '';
@@ -80,12 +77,18 @@ export const Room = () => {
                 break;
             }
             case GameState.WAIT_START: {
+                //キレイキレイ
+                setImgUrl("")
                 break;
             }
             case GameState.DRAW: {
                 break;
             }
             case GameState.CHAT: {
+                getBlob(storageReference).then((blob) => {
+                    const url = window.URL || window.webkitURL
+                    setImgUrl(url.createObjectURL(blob));
+                })
                 break;
             }
             case GameState.CHECK_ANSWER: {
@@ -202,7 +205,7 @@ export const Room = () => {
             if (createSelf) {
                 //自分が作成者ならPainterを自分に
                 await updateDoc(roomRef.current, { Painter: userId.current });
-                setPainter( userId.current);
+                setPainter(userId.current);
             }
         };
 
@@ -238,11 +241,17 @@ export const Room = () => {
                 onSnapshot(q, {
                     next: (querySnapshot) => {
                         let tmp = {};
+
                         querySnapshot.forEach((doc) => {
                             console.log(doc.id);
                             console.log(doc.data());
                             tmp[doc.id] = doc.data().name;
                         });
+                        if (isPainter&&GameState.CHAT){
+                            if (querySnapshot.docs.every(doc => doc.data().answer)) {
+                                SetGameState(GameState.CHECK_ANSWER)
+                            }
+                        }
                         setUserName(tmp[userId.current]);
                         setUserDictionary(tmp);
 
@@ -282,7 +291,6 @@ export const Room = () => {
             JoinChat(id);
             setIsJoined(true);
         });
-
         const JoinChat = (id) => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
             onChildAdded(chatRef, (snapshot) => {
@@ -297,7 +305,7 @@ export const Room = () => {
         };
     }, [roomName, userName]);
     const BalloonChat = (message) => {
-        
+
     }
     const Left = useCallback(() => {
         firestoreListenersRef.current.forEach((l) => {
@@ -308,8 +316,6 @@ export const Room = () => {
         ).finally(() => {
             const Ref = ref(db, 'rooms/' + roomId.current + '/messages');
             off(Ref);
-
-
             roomId.current = '';
             userId.current = '';
             setUserDictionary({});
@@ -317,13 +323,20 @@ export const Room = () => {
             setGameState('');
             setroomName("");
             setUserName("");
-            //どこじゃ
             removeCookie('userId');
             removeCookie('roomId');
             setIsJoined(false);
         });
     }, [userDictionary, userName, messages, stateGameState, roomName, isJoined]);
 
+    const LockAnswer = useCallback(() => {
+        updateDoc(doc(collection(roomRef.current, '/members/'), userId.current),{
+            answer:answer
+        }).then(()=>{
+            setAnsLocked(true)
+        })
+
+    }, []);
     return (
         <div>
             <div>
@@ -408,10 +421,7 @@ export const Room = () => {
                         penRadius={5}
                         odai={'くるま！！！！'}
                         onDrawEnd={(imageDataUrl) => {
-                            const storageReference = storageRef(
-                                storage,
-                                roomId.current + '.jpg'
-                            );
+
                             // Data URL string
                             uploadString(storageReference, imageDataUrl, 'data_url').then(
                                 (snapshot) => {
@@ -443,6 +453,34 @@ export const Room = () => {
                     />
                 </>
             )}
+            {getGameState() === GameState.CHAT && imgUrl !== '' &&
+                <>
+                    <img src={imgUrl} alt={"書かれたもの"}/>
+                    <TextField
+                        value={answer}
+                        onChange={(e) => {
+                            setAnswer(e.target.value);
+                        }}
+                        label={"回答"}
+                        disabled={ansLocked}
+                        variant='filled'
+                        InputProps={{
+                            endAdornment: (
+                                <InputAdornment position='end'>
+                                    <IconButton
+                                        onClick={LockAnswer}
+                                        edge='end'
+                                        color='primary'
+                                        disabled={answer === '' || ansLocked}
+                                    >
+                                        {ansLocked ? <Lock/> : <LockOpen/>}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
+                    ></TextField>
+                </>
+            }
         </div>
     );
 };
