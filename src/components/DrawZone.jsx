@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { Typography, Button } from "@mui/material";
 import * as React from "react"
 import './../App.css';
+
 const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
 const DrawZone = forwardRef((props, drawZoneRef) => {
@@ -12,11 +13,15 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
     let canvasContext = useRef(null);
     useImperativeHandle(drawZoneRef, () => {
         return {
-            //ここに関数を定義すれば外部からもよびだせるよ～～～ん
+            //ここに関数を定義すれば外部からも呼び出せます。
             clearCanvas() {
                 clear();
+            },
+            start :()=>{
+                setTime(3);
+                clear();
+                startTimer();
             }
-
         }
     })
 
@@ -119,6 +124,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
         canvasContext.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
     }
+
     const [beforeStart, setBeforeStart] = useState(true);
     const [time, setTime] = useState(3);
     const timeRef = useRef(time);
@@ -152,7 +158,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
                 </div>
             }
             <canvas
-                className={['canvas', 'board']}
+                className={'canvas board'}
                 ref={canvasRef}
                 onPointerDown={clickHandler}
                 onPointerEnter={clickHandler}

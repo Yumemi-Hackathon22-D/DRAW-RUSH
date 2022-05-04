@@ -117,7 +117,7 @@ animation: balloonMove 3s ease-in-out 0s infinite normal both;
 @media screen and (max-width: 767px) {
   /* 767px以下用（タブレット／スマートフォン用）の記述 */
 }
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 900px) {
   .canvas{
   width: 95%;
 
