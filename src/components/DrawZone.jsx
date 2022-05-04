@@ -1,6 +1,5 @@
 import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
-import {Button, Typography} from "@mui/material";
-import {PlayCircleOutline} from "@mui/icons-material";
+import {Typography} from "@mui/material";
 import * as React from "react"
 const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
@@ -23,8 +22,6 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
     useEffect(() => {
         // コンストラクタとコールバック
         const observer = new ResizeObserver((entries) => {
-
-            console.log("ここが何回も予備だあsれる")
             canvasRef.current.width = entries[0].contentRect.width;
             canvasRef.current.height = aspectRatio * entries[0].contentRect.width;
 
@@ -149,11 +146,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
             {beforeStart &&
             <div className={"blocker"}>
 
-                    <Typography variant={"h6"}>今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！</Typography>
-
-                <p>
-                    <Button variant={"contained"} onClick={startTimer}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                </p>
+                {props.canvasOverRay()}
 
             </div>
             }
