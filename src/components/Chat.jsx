@@ -20,6 +20,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import DrawZone from './DrawZone';
 import { ref as storageRef, uploadString, getBlob } from 'firebase/storage';
 import useCacheState from '../CacheState'
+import Balloon from './Balloon';
 
 const GameState = {
     //enum風
@@ -52,6 +53,9 @@ export const Room = () => {
     const [userDictionary, setUserDictionary] = useState({});
     const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
+<<<<<<< HEAD
+    const balloonRef = useRef();
+=======
 
     const [imgUrl, setImgUrl] = useState('');
     const [ansLocked, setAnsLocked] = useState(false);
@@ -61,6 +65,7 @@ export const Room = () => {
         storage,
         roomId.current + '.jpg'
     );
+>>>>>>> 3a6a2043487df9438863724565148b84c3326ea0
     const roomRef = useRef();
     const isPainter =
         getPainter() === userId.current && getPainter() !== '';
@@ -262,6 +267,7 @@ export const Room = () => {
 
                         setUserName(tmp[userId.current]);
                         setUserDictionary(tmp);
+                        balloonRef.current.syncUsers(tmp);
 
                         const Alone = async () => {
                             if (getPainter() !== userId.current) {
@@ -323,7 +329,7 @@ export const Room = () => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
             onChildAdded(chatRef, (snapshot) => {
                 console.log(snapshot.val());
-                BalloonChat(snapshot.val());
+                
             })
             onValue(chatRef, (snapshot) => {
                 console.log(snapshot.val());
@@ -332,9 +338,13 @@ export const Room = () => {
             });
         };
     }, [roomName, userName]);
+<<<<<<< HEAD
+
+=======
     const BalloonChat = (message) => {
 
     }
+>>>>>>> 3a6a2043487df9438863724565148b84c3326ea0
     const Left = useCallback(() => {
         firestoreListenersRef.current.forEach((l) => {
             l();
@@ -347,6 +357,7 @@ export const Room = () => {
             roomId.current = '';
             userId.current = '';
             setUserDictionary({});
+            balloonRef.current.syncUsers({});
             setMessages('');
             setGameState('');
             setroomName("");
@@ -460,7 +471,9 @@ export const Room = () => {
                         canvasOverRay={() => {
                             return (<>
                                     <Typography
+                                    
                                         variant={"h6"}>
+                                            <Balloon ref={balloonRef}></Balloon>
                                         {GameState.WAIT_START !== stateGameState ?
                                             "メンバーが集まるまでお待ちください" :
                                             "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"

@@ -19,16 +19,17 @@
 }
 
 .fukidasi {
-  z-index: 0;
+  z-index: 4;
 }
 
-.fukidasi .balloon.left {
+.fukidasi .fukidasi.left {
   position: absolute;
 transform-origin: left top;
 animation: balloonAnime 3s ease-out 0s infinite normal both;
 animation: balloonMove 3s ease-in-out 0s infinite normal both;
 }
-.fukidasi .balloon.right {
+
+.fukidasi .fukidasi.right {
   position: absolute;
   transform-origin: right top;
   animation: balloonAnime 3s ease-out 0s infinite normal both;
