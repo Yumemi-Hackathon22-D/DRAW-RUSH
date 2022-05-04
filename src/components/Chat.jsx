@@ -10,6 +10,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DrawZone from './DrawZone';
 import { uploadString } from 'firebase/storage';
+import useCacheState from '../CacheState'
 
 const GameState = {
     //enum風
@@ -26,16 +27,18 @@ const GameState = {
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-    let _tmpGameState;
+    /*const [_stateGameState, _stateSetGameState] = useState('');
+    let _tmpGameState = _stateGameState;
     const setGameState = (value) => {
         _tmpGameState = value
         _stateSetGameState(value);
     }
     const getGameState = () => {
         return _tmpGameState;
-    }
-    const [_stateGameState, _stateSetGameState] = useState('');
-    const painter = useRef('');
+    }*/
+    const [getGameState, setGameState, stateGameState] = useCacheState('');
+    //const painter = useRef('');
+    const [getPainter, setPainter, statePainter] = useCacheState('');
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
     const roomId = useRef('');
@@ -50,7 +53,7 @@ export const Room = () => {
 
     const roomRef = useRef();
     const isPainter =
-        painter.current === userId.current && painter.current !== '';
+        getPainter() === userId.current && getPainter() !== '';
     const SetRoomID = (value) => {
         roomId.current = value;
         setCookie('roomId', value);
@@ -68,9 +71,9 @@ export const Room = () => {
         }
     }, []);
     //ゲームの進行状態を監視
-    /*useEffect(() => {
-        console.log(gameState);
-        switch (gameState) {
+    useEffect(() => {
+        console.log(getGameState());
+        switch (getGameState()) {
             case GameState.WAIT_MORE_MEMBER: {
                 break;
             }
@@ -95,7 +98,7 @@ export const Room = () => {
             default:
                 break;
         }
-    }, [gameState]);*/
+    }, [stateGameState]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -197,7 +200,7 @@ export const Room = () => {
             if (createSelf) {
                 //自分が作成者ならPainterを自分に
                 await updateDoc(roomRef.current, { Painter: userId.current });
-                painter.current = userId.current;
+                setPainter( userId.current);
             }
         };
 
@@ -225,7 +228,7 @@ export const Room = () => {
                         console.log(data);
                         setroomName(data.Name);
                         //setGameState(data.State);
-                        painter.current = data.Painter;
+                        setPainter(data.Painter);
                     },
                 })
             );
@@ -242,7 +245,7 @@ export const Room = () => {
                         setUserDictionary(tmp);
 
                         const Alone = async () => {
-                            if (painter.current !== userId.current) {
+                            if (getPainter() !== userId.current) {
                                 await updateDoc(roomRef.current, {
                                     Painter: userId.current,
                                 }).then(() => {
@@ -257,7 +260,7 @@ export const Room = () => {
                             Alone(); //独りぼっちならPainterを自分にかつ状態をWAIT_MORE_MEMBERに
                         } else {
                             console.log(getGameState())
-                            if (!userIds.includes(painter.current) && userIds[0] === userId.current) {
+                            if (!userIds.includes(getPainter()) && userIds[0] === userId.current) {
                                 updateDoc(roomRef.current, {
                                     Painter: userId.current,
                                 }).then(() => {
@@ -266,7 +269,7 @@ export const Room = () => {
                             }
                             if (
                                 getGameState() === GameState.WAIT_MORE_MEMBER &&
-                                painter.current === userId.current
+                                getPainter() === userId.current
                             ) {
                                 SetGameState(GameState.WAIT_START);
                             }
@@ -317,7 +320,7 @@ export const Room = () => {
             removeCookie('roomId');
             setIsJoined(false);
         });
-    },[userDictionary,userName,messages,_stateGameState,roomName,isJoined]);
+    }, [userDictionary, userName, messages, stateGameState, roomName, isJoined]);
 
     return (
         <div>
@@ -417,7 +420,7 @@ export const Room = () => {
                             return (<>
                                     <Typography
                                         variant={"h6"}>
-                                        {GameState.WAIT_START !== _stateGameState ?
+                                        {GameState.WAIT_START !== stateGameState ?
                                             "メンバーが集まるまでお待ちください" :
                                             "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
                                         }
@@ -425,7 +428,7 @@ export const Room = () => {
                                     </Typography>
                                     <p>
                                         <Button variant={"contained"}
-                                                disabled={GameState.WAIT_START !== _stateGameState}
+                                                disabled={GameState.WAIT_START !== stateGameState}
                                                 onClick={() => {
                                                     SetGameState(GameState.DRAW, () => {
 
