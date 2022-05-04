@@ -105,7 +105,7 @@ export const Room = () => {
     }
     const ShowChat = () => {
         let result = [];
-        if (messages === null) return;
+        if (messages === "") return;
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>

@@ -4,10 +4,9 @@ import {CookiesProvider} from 'react-cookie';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import { Provider, ReactReduxContext } from 'react-redux';
 import './style.css';
 import Room from './components/Chat';
-import DrawZone from './components/DrawZone';
+import  "./odaiLoader"
 
 const container = document.getElementById('root');
 const root = createRoot(container);
@@ -16,7 +15,7 @@ root.render(
   <div>
     <CookiesProvider>
     <Room />
-    <DrawZone penRadius={5} odai={"くるま！！！！"}/>
+
     </CookiesProvider>
   </div>
 );
