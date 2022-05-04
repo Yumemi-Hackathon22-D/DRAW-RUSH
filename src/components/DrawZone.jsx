@@ -152,8 +152,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
                 </div>
             }
             <canvas
-                class="board"
-                className={'canvas'}
+                className={['canvas', 'board']}
                 ref={canvasRef}
                 onPointerDown={clickHandler}
                 onPointerEnter={clickHandler}
