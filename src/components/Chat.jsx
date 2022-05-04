@@ -25,7 +25,6 @@ const GameState = {//enum風
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-    let roomRef;
     const gameState = useRef/*<GameState>*/("");
     const painter = useRef('');
     const [isJoined, setIsJoined] = useState(false);
@@ -40,6 +39,7 @@ export const Room = () => {
     const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
 
+    const roomRef=useRef();
     const isPainter = painter.current === userId.current && painter.current !== ""
     const SetRoomID = (value) => {
         roomId.current = value
@@ -121,11 +121,14 @@ export const Room = () => {
 
     }
     const SetGameStateAsync = async (state) => {
-        await updateDoc(roomRef, {State: state}).then(() => {
+        console.log(state)
+        console.log(roomRef)
+        await updateDoc(roomRef.current, {State: state}).then(() => {
             //setGameState(state)
         });
     }
     const Join = () => {
+
         let createSelf = false;
         if ((userName === "" || roomName === "") && (!cookie.userId && !cookie.roomId)) {
             alert("ルーム名かユーザー名を入力してください")
@@ -167,15 +170,15 @@ export const Room = () => {
         const SetRoom = async (roomId) => {
 
             console.log(roomId)
-            roomRef = await doc(allRoomRef, roomId);
+            roomRef.current = await doc(allRoomRef, roomId);
             if (cookie === null || cookie === "" || !Object.keys(cookie).length) {
-                const userRef = await addDoc(collection(roomRef, "/members/"), {
+                const userRef = await addDoc(collection(roomRef.current, "/members/"), {
                     name: userName
                 });
                 SetUserId(userRef.id)
             }
             if (createSelf) {//自分が作成者ならPainterを自分に
-                await updateDoc(roomRef, {Painter: userId.current});
+                await updateDoc(roomRef.current, {Painter: userId.current});
                 painter.current = userId.current;
             }
 
@@ -224,7 +227,7 @@ export const Room = () => {
 
                             const Alone = async () => {
                                 if (painter.current !== userId.current) {
-                                    await updateDoc(roomRef, {Painter: userId.current}).then(() => {
+                                    await updateDoc(roomRef.current, {Painter: userId.current}).then(() => {
                                         //setPainter(userId.userId)
                                     });
                                 }
@@ -319,7 +322,7 @@ export const Room = () => {
             {isPainter &&
                 <DrawZone penRadius={5} odai={"くるま！！！！"} onDrawEnd={(imageDataUrl) => {
 
-                    const storageReference = storageRef(storage, roomId + '.jpg');
+                    const storageReference = storageRef(storage, roomId.current + '.jpg');
                     // Data URL string
                     uploadString(storageReference, imageDataUrl, 'data_url').then((snapshot) => {
                         SetGameStateAsync(GameState.CHAT);

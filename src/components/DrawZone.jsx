@@ -23,6 +23,8 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
     useEffect(() => {
         // コンストラクタとコールバック
         const observer = new ResizeObserver((entries) => {
+
+            console.log("ここが何回も予備だあsれる")
             canvasRef.current.width = entries[0].contentRect.width;
             canvasRef.current.height = aspectRatio * entries[0].contentRect.width;
 
@@ -39,7 +41,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
         return () => {
             observer.disconnect();
         };
-    }, [canvasRef.current]);
+    }, [/*canvasRef.current*/]);
     useEffect(() => {
 
         if (canvasRef.current) {
@@ -142,7 +144,8 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
 
     return (
         <div>
-            <Typography variant={"h3"}>お題:{props.odai} <span className={"timer"}>{time.toFixed(1)}</span></Typography>
+            <Typography variant={"h5"}>お題:{props.odai} <span className={"timer"}>{time.toFixed(1)}</span></Typography>
+
             {beforeStart &&
             <div className={"blocker"}>
 
