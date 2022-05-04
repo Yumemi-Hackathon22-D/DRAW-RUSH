@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
 import { ref as storageRef } from 'firebase/storage';
@@ -26,7 +26,15 @@ const GameState = {
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-    const [gameState, setGameState] = useState(/*<GameState>*/ '');
+    let _tmpGameState;
+    const setGameState = (value) => {
+        _tmpGameState = value
+        _stateSetGameState(value);
+    }
+    const getGameState = () => {
+        return _tmpGameState;
+    }
+    const [_stateGameState, _stateSetGameState] = useState('');
     const painter = useRef('');
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
@@ -60,7 +68,7 @@ export const Room = () => {
         }
     }, []);
     //ゲームの進行状態を監視
-    useEffect(() => {
+    /*useEffect(() => {
         console.log(gameState);
         switch (gameState) {
             case GameState.WAIT_MORE_MEMBER: {
@@ -87,7 +95,7 @@ export const Room = () => {
             default:
                 break;
         }
-    }, [gameState]);
+    }, [gameState]);*/
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -123,14 +131,16 @@ export const Room = () => {
             </table>
         );
     };
-    const SetGameStateAsync = async (state) => {
+    const SetGameState = (state, then = () => {
+    }) => {
         console.log(state);
         console.log(roomRef);
-        await updateDoc(roomRef.current, { State: state }).then(() => {
+        updateDoc(roomRef.current, { State: state }).then(() => {
             setGameState(state)
+            then();
         });
     };
-    const Join = () => {
+    const Join = useCallback(() => {
         let createSelf = false;
         if (
             (userName === '' || roomName === '') &&
@@ -214,7 +224,7 @@ export const Room = () => {
                         const data = doc.data();
                         console.log(data);
                         setroomName(data.Name);
-                        setGameState(data.State);
+                        //setGameState(data.State);
                         painter.current = data.Painter;
                     },
                 })
@@ -239,17 +249,26 @@ export const Room = () => {
                                     //setPainter(userId.userId)
                                 });
                             }
-                            await SetGameStateAsync(GameState.WAIT_MORE_MEMBER);
+                            SetGameState(GameState.WAIT_MORE_MEMBER);
                         };
 
-                        if (Object.keys(tmp).length <= 1) {
+                        const userIds = Object.keys(tmp)
+                        if (userIds.length <= 1) {
                             Alone(); //独りぼっちならPainterを自分にかつ状態をWAIT_MORE_MEMBERに
                         } else {
+                            console.log(getGameState())
+                            if (!userIds.includes(painter.current) && userIds[0] === userId.current) {
+                                updateDoc(roomRef.current, {
+                                    Painter: userId.current,
+                                }).then(() => {
+                                    SetGameState(GameState.WAIT_START)
+                                });
+                            }
                             if (
-                                gameState === GameState.WAIT_MORE_MEMBER &&
+                                getGameState() === GameState.WAIT_MORE_MEMBER &&
                                 painter.current === userId.current
                             ) {
-                                SetGameStateAsync(GameState.WAIT_START);
+                                SetGameState(GameState.WAIT_START);
                             }
                         }
                     },
@@ -267,21 +286,31 @@ export const Room = () => {
                 setMessages(selfmessages);
             });
         };
-    };
-    const Left = () => {
+    }, [roomName, userName]);
+    const Left = useCallback(() => {
+        firestoreListenersRef.current.forEach((l) => {
+            l();
+        });
         deleteDoc(
             doc(allRoomRef, roomId.current + '/members/' + userId.current)
-        ).then(() => {
+        ).finally(() => {
             const Ref = ref(db, 'rooms/' + roomId.current + '/messages');
             off(Ref);
-            firestoreListenersRef.current.forEach((l) => {
-                l();
-            });
+
+
+            roomId.current = '';
+            userId.current = '';
+            setUserDictionary({});
+            setMessages('');
+            setGameState('');
+            setroomName("");
+            setUserName("");
+            //どこじゃ
             removeCookie('userId');
             removeCookie('roomId');
             setIsJoined(false);
         });
-    };
+    },[userDictionary,userName,messages,_stateGameState,roomName,isJoined]);
 
     return (
         <div>
@@ -290,6 +319,8 @@ export const Room = () => {
                     disabled={isJoined}
                     value={roomName}
                     onChange={(e) => {
+                        let tmpRoomname = e.target.value;
+                        console.log(tmpRoomname)
                         setroomName(e.target.value);
                     }}
                     label='ルーム名/ID'
@@ -330,7 +361,7 @@ export const Room = () => {
                                             color='primary'
                                             disabled={sendMessage === ''}
                                         >
-                                            {<Send />}
+                                            {<Send/>}
                                         </IconButton>
                                     </InputAdornment>
                                 ),
@@ -348,7 +379,7 @@ export const Room = () => {
                                 }}
                             >
                                 {' '}
-                                {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
+                                {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
                             </IconButton>
                         </span>
                     </div>
@@ -371,26 +402,29 @@ export const Room = () => {
                             // Data URL string
                             uploadString(storageReference, imageDataUrl, 'data_url').then(
                                 (snapshot) => {
-                                    SetGameStateAsync(GameState.CHAT);
+                                    SetGameState(GameState.CHAT);
                                 }
                             );
                         }}
                         canvasOverRay={() => {
                             return (<>
-                                <Typography
-                                    variant={"h6"}>
-                                    {GameState.WAIT_START !== gameState ?
-                                        "メンバーが集まるまでお待ちください" :
-                                        "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
-                                    }
+                                    <Typography
+                                        variant={"h6"}>
+                                        {GameState.WAIT_START !== _stateGameState ?
+                                            "メンバーが集まるまでお待ちください" :
+                                            "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                        }
 
-                                </Typography>
-                                <p>
-                                    <Button variant={"contained"}
-                                        disabled={GameState.WAIT_START !== gameState}
-                                        onClick={() => {
-                                        }/*startTimer*/}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                                </p></>
+                                    </Typography>
+                                    <p>
+                                        <Button variant={"contained"}
+                                                disabled={GameState.WAIT_START !== _stateGameState}
+                                                onClick={() => {
+                                                    SetGameState(GameState.DRAW, () => {
+
+                                                    })
+                                                }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                    </p></>
                             )
                         }}
                     />
