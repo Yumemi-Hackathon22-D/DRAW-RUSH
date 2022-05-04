@@ -10,6 +10,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DrawZone from './DrawZone';
 import { uploadString } from 'firebase/storage';
+import useCacheState from '../CacheState'
 
 const GameState = {
     //enum風
@@ -26,15 +27,16 @@ const GameState = {
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-    let _tmpGameState;
+    /*const [_stateGameState, _stateSetGameState] = useState('');
+    let _tmpGameState = _stateGameState;
     const setGameState = (value) => {
         _tmpGameState = value
         _stateSetGameState(value);
     }
     const getGameState = () => {
         return _tmpGameState;
-    }
-    const [_stateGameState, _stateSetGameState] = useState('');
+    }*/
+    const [getGameState,setGameState,_stateGameState]=useCacheState('');
     const painter = useRef('');
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
@@ -68,9 +70,9 @@ export const Room = () => {
         }
     }, []);
     //ゲームの進行状態を監視
-    /*useEffect(() => {
-        console.log(gameState);
-        switch (gameState) {
+    useEffect(() => {
+        console.log(getGameState());
+        switch (getGameState()) {
             case GameState.WAIT_MORE_MEMBER: {
                 break;
             }
@@ -95,7 +97,7 @@ export const Room = () => {
             default:
                 break;
         }
-    }, [gameState]);*/
+    }, [_stateGameState]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -310,7 +312,7 @@ export const Room = () => {
             removeCookie('roomId');
             setIsJoined(false);
         });
-    },[userDictionary,userName,messages,_stateGameState,roomName,isJoined]);
+    }, [userDictionary, userName, messages, _stateGameState, roomName, isJoined]);
 
     return (
         <div>
