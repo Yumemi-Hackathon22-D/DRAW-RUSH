@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { Typography } from "@mui/material";
+import { Typography, Button } from "@mui/material";
 import * as React from "react"
 import './../App.css';
 const aspectRatio = 9 / 16
@@ -159,8 +159,8 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
                 onPointerUp={pointerOutHandler}
                 onPointerOut={pointerOutHandler}
                 onPointerMove={pointerMoveHandler}
-            ></canvas>
-            <button onClick={clear}>clear</button>
+            > </canvas>
+            <Button onClick={clear}>clear</Button>
         </div>
     );
 });
