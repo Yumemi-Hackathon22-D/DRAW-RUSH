@@ -204,6 +204,7 @@ export const Room = () => {
                         next: (doc) => {
                             const data = doc.data()
                             console.log(data);
+                            setroomName(data.Name);
                             gameState.current = data.State;
                             painter.current = (data.Painter);
                         }
@@ -214,9 +215,9 @@ export const Room = () => {
                         next: (querySnapshot) => {
                             let tmp = {}
                             querySnapshot.forEach((doc) => {
-
                                 console.log(doc.id)
                                 console.log(doc.data())
+                                setUserName(doc.data().name)
                                 tmp[doc.id] = doc.data().name
                             });
                             setUserDictionary(tmp)
@@ -290,8 +291,6 @@ export const Room = () => {
                     <Button variant="contained" onClick={Join}>Join</Button>}
             </div>
             {isJoined ? <>
-
-
                 <div>
                     <TextField value={sendMessage}
                                onChange={(e) => {
