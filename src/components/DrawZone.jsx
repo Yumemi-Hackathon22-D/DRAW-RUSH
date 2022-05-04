@@ -1,7 +1,8 @@
-import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
-import {Button, Typography} from "@mui/material";
-import {PlayCircleOutline} from "@mui/icons-material";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Button, Typography } from "@mui/material";
+import { PlayCircleOutline } from "@mui/icons-material";
 import * as React from "react"
+import './../App.css';
 const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
 const DrawZone = forwardRef((props, drawZoneRef) => {
@@ -118,46 +119,47 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
 
     function clear() {
         canvasContext.current.fillStyle = "#FFFFFF";
-        canvasContext.current.fillRect(0,0,canvasRef.current.width, canvasRef.current.height);
+        canvasContext.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
     }
-    const [beforeStart,setBeforeStart]=useState(true);
-    const [time,setTime]=useState(3);
+    const [beforeStart, setBeforeStart] = useState(true);
+    const [time, setTime] = useState(3);
     const timeRef = useRef(time);
     timeRef.current = time;
-    const startTimer=useCallback(()=>{
+    const startTimer = useCallback(() => {
 
         setTime(3)
         setBeforeStart(false)
-       let timer= setInterval(()=>{
-            setTime(timeRef.current-0.1)
-            if (timeRef.current-0.1<= 0) {
+        let timer = setInterval(() => {
+            setTime(timeRef.current - 0.1)
+            if (timeRef.current - 0.1 <= 0) {
                 setBeforeStart(true);
-                const imageDataUrl=canvasRef.current?.toDataURL("image/jpeg",0);
+                const imageDataUrl = canvasRef.current?.toDataURL("image/jpeg", 0);
                 console.log(imageDataUrl);
                 props.onDrawEnd(imageDataUrl);
                 clear();
                 clearInterval(timer);
             }
         }, 100);
-    },[time])
+    }, [time])
 
     return (
         <div>
             <Typography variant={"h5"}>お題:{props.odai} <span className={"timer"}>{time.toFixed(1)}</span></Typography>
 
             {beforeStart &&
-            <div className={"blocker"}>
+                <div className={"blocker"}>
 
                     <Typography variant={"h6"}>今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！</Typography>
 
-                <p>
-                    <Button variant={"contained"} onClick={startTimer}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                </p>
+                    <p>
+                        <Button variant={"contained"} onClick={startTimer}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                    </p>
 
-            </div>
+                </div>
             }
             <canvas
+                class="board"
                 className={'canvas'}
                 ref={canvasRef}
                 onPointerDown={clickHandler}
