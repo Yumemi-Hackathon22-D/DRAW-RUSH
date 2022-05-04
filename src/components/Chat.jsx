@@ -43,10 +43,7 @@ export const Room = () => {
     const [userDictionary, setUserDictionary] = useState({});
     const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
-<<<<<<< HEAD
     const balloonRef = useRef();
-=======
-
     const [imgUrl, setImgUrl] = useState('');
     const [ansLocked, setAnsLocked] = useState(false);
     const [answer, setAnswer] = useState('');
@@ -54,7 +51,6 @@ export const Room = () => {
         storage,
         roomId.current + '.jpg'
     );
->>>>>>> 3a6a2043487df9438863724565148b84c3326ea0
     const roomRef = useRef();
     const isPainter =
         getPainter() === userId.current && getPainter() !== '';
@@ -252,14 +248,15 @@ export const Room = () => {
                             console.log(doc.data());
                             tmp[doc.id] = doc.data().name;
                         });
-                        if (isPainter&&GameState.CHAT){
+                        if (isPainter && GameState.CHAT) {
                             if (querySnapshot.docs.every(doc => doc.data().answer)) {
                                 SetGameState(GameState.CHECK_ANSWER)
                             }
                         }
                         setUserName(tmp[userId.current]);
                         setUserDictionary(tmp);
-                        balloonRef.current.syncUsers(tmp);
+                        console.log(balloonRef);
+                        // balloonRef.current.syncUsers(tmp);
 
                         const Alone = async () => {
                             if (getPainter() !== userId.current) {
@@ -301,7 +298,7 @@ export const Room = () => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
             onChildAdded(chatRef, (snapshot) => {
                 console.log(snapshot.val());
-                
+
             })
             onValue(chatRef, (snapshot) => {
                 console.log(snapshot.val());
@@ -310,13 +307,6 @@ export const Room = () => {
             });
         };
     }, [roomName, userName]);
-<<<<<<< HEAD
-
-=======
-    const BalloonChat = (message) => {
-
-    }
->>>>>>> 3a6a2043487df9438863724565148b84c3326ea0
     const Left = useCallback(() => {
         firestoreListenersRef.current.forEach((l) => {
             l();
@@ -341,9 +331,9 @@ export const Room = () => {
     }, [userDictionary, userName, messages, stateGameState, roomName, isJoined]);
 
     const LockAnswer = useCallback(() => {
-        updateDoc(doc(collection(roomRef.current, '/members/'), userId.current),{
-            answer:answer
-        }).then(()=>{
+        updateDoc(doc(collection(roomRef.current, '/members/'), userId.current), {
+            answer: answer
+        }).then(() => {
             setAnsLocked(true)
         })
 
@@ -397,7 +387,7 @@ export const Room = () => {
                                             color='primary'
                                             disabled={sendMessage === ''}
                                         >
-                                            {<Send/>}
+                                            {<Send />}
                                         </IconButton>
                                     </InputAdornment>
                                 ),
@@ -415,7 +405,7 @@ export const Room = () => {
                                 }}
                             >
                                 {' '}
-                                {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
+                                {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
                             </IconButton>
                         </span>
                     </div>
@@ -442,25 +432,25 @@ export const Room = () => {
                         }}
                         canvasOverRay={() => {
                             return (<>
-                                    <Typography
-                                    
-                                        variant={"h6"}>
-                                            <Balloon ref={balloonRef}></Balloon>
-                                        {GameState.WAIT_START !== stateGameState ?
-                                            "メンバーが集まるまでお待ちください" :
-                                            "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
-                                        }
+                                <Typography
 
-                                    </Typography>
-                                    <p>
-                                        <Button variant={"contained"}
-                                                disabled={GameState.WAIT_START !== stateGameState}
-                                                onClick={() => {
-                                                    SetGameState(GameState.DRAW, () => {
-                                                        drawZoneRef.current.start();
-                                                    })
-                                                }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                                    </p></>
+                                    variant={"h6"}>
+                                    <Balloon ref={balloonRef}></Balloon>
+                                    {GameState.WAIT_START !== stateGameState ?
+                                        "メンバーが集まるまでお待ちください" :
+                                        "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                    }
+
+                                </Typography>
+                                <p>
+                                    <Button variant={"contained"}
+                                        disabled={GameState.WAIT_START !== stateGameState}
+                                        onClick={() => {
+                                            SetGameState(GameState.DRAW, () => {
+                                                drawZoneRef.current.start();
+                                            })
+                                        }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                </p></>
                             )
                         }}
                     />
@@ -468,7 +458,7 @@ export const Room = () => {
             )}
             {getGameState() === GameState.CHAT && imgUrl !== '' &&
                 <>
-                    <img src={imgUrl} alt={"書かれたもの"}/>
+                    <img src={imgUrl} alt={"書かれたもの"} />
                     <TextField
                         value={answer}
                         onChange={(e) => {
@@ -486,7 +476,7 @@ export const Room = () => {
                                         color='primary'
                                         disabled={answer === '' || ansLocked}
                                     >
-                                        {ansLocked ? <Lock/> : <LockOpen/>}
+                                        {ansLocked ? <Lock /> : <LockOpen />}
                                     </IconButton>
                                 </InputAdornment>
                             ),
