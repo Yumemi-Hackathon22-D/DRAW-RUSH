@@ -4,8 +4,8 @@ import { firestore, db, storage } from '../firebase/index';
 import { ref as storageRef } from 'firebase/storage';
 import { ref, push, set, serverTimestamp, onValue, off, } from 'firebase/database';
 import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
-import { TextField, Button, IconButton, InputAdornment } from '@mui/material';
-import { Send } from '@mui/icons-material';
+import { TextField, Button, IconButton, InputAdornment, Typography } from '@mui/material';
+import { PlayCircleOutline, Send } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DrawZone from './DrawZone';
@@ -26,7 +26,7 @@ const GameState = {
 
 export const Room = () => {
     const allRoomRef = collection(firestore, 'rooms');
-    const gameState = useRef(/*<GameState>*/ '');
+    const [gameState, setGameState] = useState(/*<GameState>*/ '');
     const painter = useRef('');
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
@@ -61,8 +61,8 @@ export const Room = () => {
     }, []);
     //ゲームの進行状態を監視
     useEffect(() => {
-        console.log(gameState.current);
-        switch (gameState.current) {
+        console.log(gameState);
+        switch (gameState) {
             case GameState.WAIT_MORE_MEMBER: {
                 break;
             }
@@ -87,7 +87,7 @@ export const Room = () => {
             default:
                 break;
         }
-    }, [gameState.current]);
+    }, [gameState]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -127,7 +127,7 @@ export const Room = () => {
         console.log(state);
         console.log(roomRef);
         await updateDoc(roomRef.current, { State: state }).then(() => {
-            //setGameState(state)
+            setGameState(state)
         });
     };
     const Join = () => {
@@ -158,8 +158,8 @@ export const Room = () => {
                     State === GameState.WAIT_MORE_MEMBER ||
                     State === GameState.WAIT_START
                 ) {
+                    setGameState(State)
                     SetRoomID(rN);
-
                     return rN;
                 }
 
@@ -214,7 +214,7 @@ export const Room = () => {
                         const data = doc.data();
                         console.log(data);
                         setroomName(data.Name);
-                        gameState.current = data.State;
+                        setGameState(data.State);
                         painter.current = data.Painter;
                     },
                 })
@@ -226,9 +226,9 @@ export const Room = () => {
                         querySnapshot.forEach((doc) => {
                             console.log(doc.id);
                             console.log(doc.data());
-                            setUserName(doc.data().name);
                             tmp[doc.id] = doc.data().name;
                         });
+                        setUserName(tmp[userId.current]);
                         setUserDictionary(tmp);
 
                         const Alone = async () => {
@@ -246,7 +246,7 @@ export const Room = () => {
                             Alone(); //独りぼっちならPainterを自分にかつ状態をWAIT_MORE_MEMBERに
                         } else {
                             if (
-                                gameState.current === GameState.WAIT_MORE_MEMBER &&
+                                gameState === GameState.WAIT_MORE_MEMBER &&
                                 painter.current === userId.current
                             ) {
                                 SetGameStateAsync(GameState.WAIT_START);
@@ -358,22 +358,43 @@ export const Room = () => {
                 <></>
             )}
             {isPainter && (
-                <DrawZone
-                    penRadius={5}
-                    odai={'くるま！！！！'}
-                    onDrawEnd={(imageDataUrl) => {
-                        const storageReference = storageRef(
-                            storage,
-                            roomId.current + '.jpg'
-                        );
-                        // Data URL string
-                        uploadString(storageReference, imageDataUrl, 'data_url').then(
-                            (snapshot) => {
-                                SetGameStateAsync(GameState.CHAT);
-                            }
-                        );
-                    }}
-                />
+                <>
+                    <h3>メンバー数:{Object.keys(userDictionary).length}</h3>
+                    <DrawZone
+                        penRadius={5}
+                        odai={'くるま！！！！'}
+                        onDrawEnd={(imageDataUrl) => {
+                            const storageReference = storageRef(
+                                storage,
+                                roomId.current + '.jpg'
+                            );
+                            // Data URL string
+                            uploadString(storageReference, imageDataUrl, 'data_url').then(
+                                (snapshot) => {
+                                    SetGameStateAsync(GameState.CHAT);
+                                }
+                            );
+                        }}
+                        canvasOverRay={() => {
+                            return (<>
+                                <Typography
+                                    variant={"h6"}>
+                                    {GameState.WAIT_START !== gameState ?
+                                        "メンバーが集まるまでお待ちください" :
+                                        "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                    }
+
+                                </Typography>
+                                <p>
+                                    <Button variant={"contained"}
+                                        disabled={GameState.WAIT_START !== gameState}
+                                        onClick={() => {
+                                        }/*startTimer*/}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                </p></>
+                            )
+                        }}
+                    />
+                </>
             )}
         </div>
     );
