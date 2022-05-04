@@ -36,6 +36,8 @@ export const Room = () => {
     const getGameState = () => {
         return _tmpGameState;
     }*/
+    //呼び出せる関数はDrawZone.jsxのL14らへんに定義してあります。
+    const drawZoneRef=useRef();
     const [getGameState, setGameState, stateGameState] = useCacheState('');
     //const painter = useRef('');
     const [getPainter, setPainter, statePainter] = useCacheState('');
@@ -227,7 +229,7 @@ export const Room = () => {
                         const data = doc.data();
                         console.log(data);
                         setroomName(data.Name);
-                        //setGameState(data.State);
+                        setGameState(data.State);
                         setPainter(data.Painter);
                     },
                 })
@@ -402,6 +404,7 @@ export const Room = () => {
                 <>
                     <h3>メンバー数:{Object.keys(userDictionary).length}</h3>
                     <DrawZone
+                        ref={drawZoneRef}
                         penRadius={5}
                         odai={'くるま！！！！'}
                         onDrawEnd={(imageDataUrl) => {
@@ -431,7 +434,7 @@ export const Room = () => {
                                                 disabled={GameState.WAIT_START !== stateGameState}
                                                 onClick={() => {
                                                     SetGameState(GameState.DRAW, () => {
-
+                                                        drawZoneRef.current.start();
                                                     })
                                                 }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
                                     </p></>

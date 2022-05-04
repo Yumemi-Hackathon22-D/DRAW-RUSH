@@ -10,6 +10,5 @@ export default function useCacheState(initialValue) {
     const Getter=()=>{
         return tmp;
     }
-
-    return [Getter,Setter,state]
+    return [Getter,Setter,state];
 }
