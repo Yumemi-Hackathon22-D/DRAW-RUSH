@@ -39,7 +39,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
         return () => {
             observer.disconnect();
         };
-    }, [canvasRef]);
+    }, [canvasRef.current]);
     useEffect(() => {
 
         if (canvasRef.current) {

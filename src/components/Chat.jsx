@@ -56,7 +56,7 @@ export const Room = () => {
             userId.current = cookie.userId
             Join()
         }
-    }, [])
+    }, []);
     //ゲームの進行状態を監視
     useEffect(() => {
         console.log(gameState.current)
@@ -143,8 +143,15 @@ export const Room = () => {
                 SetRoomID(Id);
                 return Id
             } else {
-                SetRoomID(rN);
-                return rN
+                const State = docSnap.data().State;
+                if (State === GameState.WAIT_MORE_MEMBER || State === GameState.WAIT_START) {
+
+                    SetRoomID(rN);
+
+                    return rN
+                }
+
+                return ""
             }
         }
 
@@ -176,12 +183,19 @@ export const Room = () => {
 
         const JoinRoom = async () => {
             let id = await CheckRoom();
+            if (id === "") {
+                return "";
+            }
             await SetRoom(id);
             return id;
         }
 
         JoinRoom()
             .then((id) => {
+                if (id === "") {
+                    alert("待機状態でなかったため、入れませんでした")
+                    return
+                }
                 const roomDoc = doc(allRoomRef, id)//Not
                 const q = collection(roomDoc, "/members/");
 
