@@ -53,9 +53,8 @@ export const Room = () => {
     const [userDictionary, setUserDictionary] = useState({});
     const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
-<<<<<<< HEAD
+
     const balloonRef = useRef();
-=======
 
     const [imgUrl, setImgUrl] = useState('');
     const [ansLocked, setAnsLocked] = useState(false);
@@ -65,7 +64,6 @@ export const Room = () => {
         storage,
         roomId.current + '.jpg'
     );
->>>>>>> 3a6a2043487df9438863724565148b84c3326ea0
     const roomRef = useRef();
     const isPainter =
         getPainter() === userId.current && getPainter() !== '';
@@ -338,13 +336,9 @@ export const Room = () => {
             });
         };
     }, [roomName, userName]);
-<<<<<<< HEAD
-
-=======
     const BalloonChat = (message) => {
 
     }
->>>>>>> 3a6a2043487df9438863724565148b84c3326ea0
     const Left = useCallback(() => {
         firestoreListenersRef.current.forEach((l) => {
             l();
