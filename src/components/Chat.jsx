@@ -3,7 +3,17 @@ import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
 import { ref, push, set, serverTimestamp, onValue, off, onChildAdded } from 'firebase/database';
 import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
-import { TextField, Button, IconButton, InputAdornment, Typography } from '@mui/material';
+import {
+    TextField,
+    Button,
+    IconButton,
+    InputAdornment,
+    Typography,
+    TableContainer,
+    Paper,
+    Table,
+    TableHead, TableRow, TableCell, TableBody, Checkbox
+} from '@mui/material';
 import { Lock, LockOpen, PlayCircleOutline, Send } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
@@ -46,6 +56,7 @@ export const Room = () => {
     const [imgUrl, setImgUrl] = useState('');
     const [ansLocked, setAnsLocked] = useState(false);
     const [answer, setAnswer] = useState('');
+    const [answerDatas, setAnswerDatas] = useState([]);
     const storageReference = storageRef(
         storage,
         roomId.current + '.jpg'
@@ -247,11 +258,8 @@ export const Room = () => {
                             console.log(doc.data());
                             tmp[doc.id] = doc.data().name;
                         });
-                        if (isPainter&&GameState.CHAT){
-                            if (querySnapshot.docs.every(doc => doc.data().answer)) {
-                                SetGameState(GameState.CHECK_ANSWER)
-                            }
-                        }
+
+
                         setUserName(tmp[userId.current]);
                         setUserDictionary(tmp);
 
@@ -278,11 +286,31 @@ export const Room = () => {
                                     SetGameState(GameState.WAIT_START)
                                 });
                             }
-                            if (
-                                getGameState() === GameState.WAIT_MORE_MEMBER &&
-                                getPainter() === userId.current
-                            ) {
-                                SetGameState(GameState.WAIT_START);
+                            if (getPainter() === userId.current) {
+                                if (
+                                    getGameState() === GameState.WAIT_MORE_MEMBER
+                                ) {
+                                    SetGameState(GameState.WAIT_START);
+                                } else if (GameState.CHAT) {
+                                    if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
+                                        console.log("WTF")
+                                        SetGameState(GameState.CHECK_ANSWER, () => {
+                                            let tmp_answerDatas = [];
+                                            querySnapshot.forEach((doc) => {
+                                                if (getPainter() !== doc.id) {
+                                                    const data = doc.data()
+                                                    tmp_answerDatas.push({
+                                                        answer: data.answer,
+                                                        userId: doc.id,
+                                                        name: data.name,
+                                                        isCorrect: false
+                                                    });
+                                                }
+                                            });
+                                            setAnswerDatas(tmp_answerDatas);
+                                        })
+                                    }
+                                }
                             }
                         }
                     },
@@ -330,13 +358,13 @@ export const Room = () => {
     }, [userDictionary, userName, messages, stateGameState, roomName, isJoined]);
 
     const LockAnswer = useCallback(() => {
-        updateDoc(doc(collection(roomRef.current, '/members/'), userId.current),{
-            answer:answer
-        }).then(()=>{
+        updateDoc(doc(collection(roomRef.current, '/members/'), userId.current), {
+            answer: answer
+        }).then(() => {
             setAnsLocked(true)
         })
 
-    }, []);
+    }, [answer]);
     return (
         <div>
             <div>
@@ -456,7 +484,7 @@ export const Room = () => {
             {getGameState() === GameState.CHAT && imgUrl !== '' &&
                 <>
                     <img src={imgUrl} alt={"書かれたもの"}/>
-                    <TextField
+                    {!isPainter && <TextField
                         value={answer}
                         onChange={(e) => {
                             setAnswer(e.target.value);
@@ -478,7 +506,57 @@ export const Room = () => {
                                 </InputAdornment>
                             ),
                         }}
-                    ></TextField>
+                    ></TextField>}
+                </>
+            }
+            {getGameState() === GameState.CHECK_ANSWER && answerDatas.length !== 0 &&
+                <>
+                    <div>
+                        <TableContainer component={Paper}>
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell>名前</TableCell>
+                                        <TableCell>回答</TableCell>
+                                        <TableCell>正誤</TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {answerDatas.map((ans, index) => (
+
+                                        <TableRow
+                                            key={ans.userId}
+                                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                        >
+                                            <TableCell component="th" scope="row">
+                                                {ans.name}
+                                            </TableCell>
+                                            <TableCell>
+                                                {ans.answer}
+                                            </TableCell>
+                                            <TableCell>
+                                                <Checkbox
+                                                    checked={ans.isCorrect}
+                                                    onChange={(event) => {
+                                                        setAnswerDatas((prevState) =>
+                                                            prevState.map((preAns, i) => (i === index ? {
+                                                                ...preAns,
+                                                                isCorrect: event.target.checked
+                                                            } : preAns))
+                                                        )
+                                                    }}
+                                                    inputProps={{ 'aria-label': 'controlled' }}
+                                                />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                    }
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        <Button variant={"contained"} onClick={() => {
+                        }}>送信</Button>
+                    </div>
                 </>
             }
         </div>
