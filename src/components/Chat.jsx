@@ -421,20 +421,6 @@ export const Room = () => {
                             }}
                             label='ルーム名/ID'
                             variant='filled'
-                            InputProps={{
-                                endAdornment: (
-                                    <InputAdornment position='end'>
-                                        <IconButton
-                                            onClick={handleSubmit}
-                                            edge='end'
-                                            color='primary'
-                                            disabled={sendMessage === ''}
-                                        >
-                                            {<Send />}
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                            }}
                         ></TextField>
                         <TextField
                             value={userName}
