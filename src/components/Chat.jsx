@@ -58,6 +58,7 @@ export const Room = () => {
     const balloonRef = useRef();
     const [imgUrl, setImgUrl] = useState('');
     const [ansLocked, setAnsLocked] = useState(false);
+    const [sentAnswer, setSentAnswer] = useState(false);
     const [answer, setAnswer] = useState('');
     const [answerDatas, setAnswerDatas] = useState([]);
     const storageReference = storageRef(
@@ -279,6 +280,8 @@ export const Room = () => {
                             SetGameState(GameState.WAIT_MORE_MEMBER);
                         };
 
+
+
                         const userIds = Object.keys(tmp)
                         if (userIds.length <= 1) {
                             Alone(); //独りぼっちならPainterを自分にかつ状態をWAIT_MORE_MEMBERに
@@ -298,7 +301,6 @@ export const Room = () => {
                                     SetGameState(GameState.WAIT_START);
                                 } else if (GameState.CHAT) {
                                     if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
-                                        console.log("WTF")
                                         SetGameState(GameState.CHECK_ANSWER, () => {
                                             let tmp_answerDatas = [];
                                             querySnapshot.forEach((doc) => {
@@ -315,6 +317,25 @@ export const Room = () => {
                                             setAnswerDatas(tmp_answerDatas);
                                         })
                                     }
+                                }
+                            }
+                            else if (GameState.CHAT) {
+                                if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
+                                    SetGameState(GameState.CHECK_ANSWER, () => {
+                                        let tmp_answerDatas = [];
+                                        querySnapshot.forEach((doc) => {
+                                            if (getPainter() !== doc.id) {
+                                                const data = doc.data()
+                                                tmp_answerDatas.push({
+                                                    answer: data.answer,
+                                                    userId: doc.id,
+                                                    name: data.name,
+                                                    isCorrect: false
+                                                });
+                                            }
+                                        });
+                                        setAnswerDatas(tmp_answerDatas);
+                                    })
                                 }
                             }
                         }
@@ -359,18 +380,21 @@ export const Room = () => {
             setIsJoined(false);
             setAnsLocked(false)
             setAnswer('');
+            setSentAnswer(false);
         });
-    }, [userDictionary, userName, messages, stateGameState, roomName, isJoined, ansLocked, answer]);
+    }, [sentAnswer, userDictionary, userName, messages, stateGameState, roomName, isJoined, ansLocked, answer]);
 
     const LockAnswer = useCallback(() => {
         updateDoc(doc(collection(roomRef.current, '/members/'), userId.current), {
             answer: answer
         }).then(() => {
             setAnsLocked(true)
+            setSentAnswer(true)
         })
 
     }, [answer]);
     const SubmitResult = () => {
+        setSentAnswer(true);
         const Async = async () => {
             for (const ans of answerDatas) {
                 await updateDoc(doc(collection(roomRef.current, '/members/'), ans.userId), {
@@ -482,125 +506,134 @@ export const Room = () => {
                 ) : (
                     <></>
                 )}</View>
-            {isPainter && (
-                <>
-                    <h3>メンバー数:{Object.keys(userDictionary).length}</h3>
-                    <DrawZone
-                        ref={drawZoneRef}
-                        penRadius={5}
-                        odai={'くるま！！！！'}
-                        onDrawEnd={(imageDataUrl) => {
+            <View style={{ width: '65%' }}>
+                {isPainter && (
+                    <>
+                        <h3>メンバー数:{Object.keys(userDictionary).length}</h3>
+                        <DrawZone
+                            ref={drawZoneRef}
+                            penRadius={5}
+                            odai={'くるま！！！！'}
+                            onDrawEnd={(imageDataUrl) => {
 
-                            // Data URL string
-                            uploadString(storageReference, imageDataUrl, 'data_url').then(
-                                (snapshot) => {
-                                    SetGameState(GameState.CHAT);
-                                }
-                            );
-                        }}
-                        canvasOverRay={() => {
-                            return (<>
-                                <Typography
-
-                                    variant={"h6"}>
-                                    <Balloon ref={balloonRef}></Balloon>
-                                    {GameState.WAIT_START !== stateGameState ?
-                                        "メンバーが集まるまでお待ちください" :
-                                        "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                // Data URL string
+                                uploadString(storageReference, imageDataUrl, 'data_url').then(
+                                    (snapshot) => {
+                                        SetGameState(GameState.CHAT);
                                     }
+                                );
+                            }}
+                            canvasOverRay={() => {
+                                return (<>
+                                    <Typography
 
-                                </Typography>
-                                <p>
-                                    <Button variant={"contained"}
-                                        disabled={GameState.WAIT_START !== stateGameState}
-                                        onClick={() => {
-                                            SetGameState(GameState.DRAW, () => {
-                                                drawZoneRef.current.start();
-                                            })
-                                        }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                                </p></>
-                            )
-                        }}
-                    />
-                </>
-            )}
-            {getGameState() === GameState.CHAT && imgUrl !== '' &&
-                <>
-                    <img src={imgUrl} alt={"書かれたもの"} />
-                    {!isPainter && <TextField
-                        value={answer}
-                        onChange={(e) => {
-                            setAnswer(e.target.value);
-                        }}
-                        label={"回答"}
-                        disabled={ansLocked}
-                        variant='filled'
-                        InputProps={{
-                            endAdornment: (
-                                <InputAdornment position='end'>
-                                    <IconButton
-                                        onClick={LockAnswer}
-                                        edge='end'
-                                        color='primary'
-                                        disabled={answer === '' || ansLocked}
-                                    >
-                                        {ansLocked ? <Lock /> : <LockOpen />}
-                                    </IconButton>
-                                </InputAdornment>
-                            ),
-                        }}
-                    ></TextField>}
-                </>
-            }
-            {getGameState() === GameState.CHECK_ANSWER && answerDatas.length !== 0 &&
-                <>
-                    <div>
-                        <TableContainer component={Paper}>
-                            <Table>
-                                <TableHead>
-                                    <TableRow>
-                                        <TableCell>名前</TableCell>
-                                        <TableCell>回答</TableCell>
-                                        {isPainter ? <TableCell>正誤</TableCell> : <></>}
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {answerDatas.map((ans, index) => (
+                                        variant={"h6"}>
+                                        <Balloon ref={balloonRef}></Balloon>
+                                        {GameState.WAIT_START !== stateGameState ?
+                                            "メンバーが集まるまでお待ちください" :
+                                            "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                        }
 
-                                        <TableRow
-                                            key={ans.userId}
-                                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                                        >
-                                            <TableCell component="th" scope="row">
-                                                {ans.name}
-                                            </TableCell>
-                                            <TableCell>
-                                                {ans.answer}
-                                            </TableCell>
-                                            {isPainter ? <TableCell>
-                                                <Checkbox
-                                                    checked={ans.isCorrect}
-                                                    onChange={(event) => {
-                                                        setAnswerDatas((prevState) =>
-                                                            prevState.map((preAns, i) => (i === index ? {
-                                                                ...preAns,
-                                                                isCorrect: event.target.checked
-                                                            } : preAns))
-                                                        )
-                                                    }}
-                                                    inputProps={{ 'aria-label': 'controlled' }}
-                                                ><IconButton>{ans.isCorrect ? <CheckIcon /> : <ClearIcon />}</IconButton></Checkbox>
-                                            </TableCell> : <></>}
+                                    </Typography>
+                                    <p>
+                                        <Button variant={"contained"}
+                                            disabled={GameState.WAIT_START !== stateGameState}
+                                            onClick={() => {
+                                                SetGameState(GameState.DRAW, () => {
+                                                    drawZoneRef.current.start();
+                                                })
+                                            }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                    </p></>
+                                )
+                            }}
+                        />
+                    </>
+                )}
+                {getGameState() === GameState.CHAT && imgUrl !== '' &&
+                    <>
+
+                        {!isPainter ?
+
+                            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                                <img src={imgUrl} alt={"書かれたもの"} />
+                                <TextField
+                                    value={answer}
+                                    onChange={(e) => {
+                                        setAnswer(e.target.value);
+                                    }}
+                                    label={"回答"}
+                                    disabled={ansLocked}
+                                    variant='filled'
+                                    InputProps={{
+                                        endAdornment: (
+
+                                            <InputAdornment position='end'>
+                                                <IconButton
+                                                    onClick={LockAnswer}
+                                                    edge='end'
+                                                    color='primary'
+                                                    disabled={answer === '' || ansLocked}
+                                                >
+                                                    {ansLocked ? <Lock /> : <LockOpen />}
+                                                </IconButton>
+                                            </InputAdornment>
+
+                                        ),
+                                    }}
+                                ></TextField>
+                            </View> : <></>}
+                    </>
+                }
+                {getGameState() === GameState.CHECK_ANSWER && answerDatas.length !== 0 &&
+                    <>
+                        <div>
+                            <TableContainer component={Paper}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>名前</TableCell>
+                                            <TableCell>回答</TableCell>
+                                            {isPainter ? <TableCell>正誤</TableCell> : <></>}
                                         </TableRow>
-                                    ))
-                                    }
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                        <Button variant={"contained"} onClick={SubmitResult}>送信</Button>
-                    </div>
-                </>
-            }
+                                    </TableHead>
+                                    <TableBody>
+                                        {answerDatas.map((ans, index) => (
+
+                                            <TableRow
+                                                key={ans.userId}
+                                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                            >
+                                                <TableCell component="th" scope="row">
+                                                    {ans.name}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {ans.answer}
+                                                </TableCell>
+                                                {isPainter ? <TableCell>
+                                                    <Checkbox
+                                                        checked={ans.isCorrect}
+                                                        onChange={(event) => {
+                                                            setAnswerDatas((prevState) =>
+                                                                prevState.map((preAns, i) => (i === index ? {
+                                                                    ...preAns,
+                                                                    isCorrect: event.target.checked
+                                                                } : preAns))
+                                                            )
+                                                        }}
+                                                        inputProps={{ 'aria-label': 'controlled' }}
+                                                    ><IconButton>{ans.isCorrect ? <CheckIcon /> : <ClearIcon />}</IconButton></Checkbox>
+                                                </TableCell> : <></>}
+                                            </TableRow>
+                                        ))
+                                        }
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                            {!(sentAnswer && !isPainter) || isPainter ? <Button variant={"contained"} onClick={SubmitResult}>送信</Button> : <></>}
+                        </div>
+                    </>
+                }
+            </View>
         </div>
     );
 };

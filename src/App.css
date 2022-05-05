@@ -90,7 +90,7 @@ animation: balloonMove 3s ease-in-out 0s infinite normal both;
   border: solid;
   touch-action: none;
   background: white;
-  width: 65%;
+  width: 100%;
   aspect-ratio: auto 16/9;
   z-index: -1;
 }
@@ -99,7 +99,7 @@ animation: balloonMove 3s ease-in-out 0s infinite normal both;
   z-index: 1;
   border: solid;
   position: absolute;
-  width: 65%;
+  width: 100%;
   aspect-ratio: auto 16/9;
   background: lightgray;
 
