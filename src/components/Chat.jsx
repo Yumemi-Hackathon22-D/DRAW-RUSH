@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState, } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
 import { ref, push, set, serverTimestamp, onValue, off, onChildAdded } from 'firebase/database';
@@ -147,9 +148,11 @@ export const Room = () => {
             );
         }
         return (
-            <table>
-                <tbody>{result}</tbody>
-            </table>
+            <View style={{ flex: 5 }}>
+                <table>
+                    <tbody>{result}</tbody>
+                </table>
+            </View>
         );
     };
     const SetGameState = (state, then = () => {
@@ -346,7 +349,7 @@ export const Room = () => {
             roomId.current = '';
             userId.current = '';
             setUserDictionary({});
-            balloonRef.current.syncUsers({});
+            // balloonRef.current.syncUsers({});
             setMessages('');
             setGameState('');
             setroomName("");
@@ -367,56 +370,32 @@ export const Room = () => {
         })
 
     }, [answer]);
-    const SubmitResult=()=>{
-        const Async= async () => {
+    const SubmitResult = () => {
+        const Async = async () => {
             for (const ans of answerDatas) {
                 await updateDoc(doc(collection(roomRef.current, '/members/'), ans.userId), {
                     isCorrect: ans.isCorrect
                 })
             }
         }
-        Async().then(()=>{SetGameState(GameState.RESULT)})
+        Async().then(() => { SetGameState(GameState.RESULT) })
 
     }
     return (
         <div>
-            <div>
-                <TextField
-                    disabled={isJoined}
-                    value={roomName}
-                    onChange={(e) => {
-                        let tmpRoomname = e.target.value;
-                        console.log(tmpRoomname)
-                        setroomName(e.target.value);
-                    }}
-                    label='ルーム名/ID'
-                    variant='filled'
-                ></TextField>
-                <TextField
-                    value={userName}
-                    disabled={isJoined}
-                    label='ユーザー名'
-                    onChange={(e) => setUserName(e.target.value)}
-                    variant='filled'
-                ></TextField>
-                {isJoined ? (
-                    <Button variant='contained' color='error' onClick={Left}>
-                        Left
-                    </Button>
-                ) : (
-                    <Button variant='contained' onClick={Join}>
-                        Join
-                    </Button>
-                )}
-            </div>
-            {isJoined ? (
-                <>
+            <View style={{ width: '50%', flex: 1, flexDirection: 'row' }}>
+                <div>
+
                     <div>
                         <TextField
-                            value={sendMessage}
+                            disabled={isJoined}
+                            value={roomName}
                             onChange={(e) => {
-                                setSendMessage(e.target.value);
+                                let tmpRoomname = e.target.value;
+                                console.log(tmpRoomname)
+                                setroomName(e.target.value);
                             }}
+                            label='ルーム名/ID'
                             variant='filled'
                             InputProps={{
                                 endAdornment: (
@@ -427,33 +406,82 @@ export const Room = () => {
                                             color='primary'
                                             disabled={sendMessage === ''}
                                         >
-                                            {<Send/>}
+                                            {<Send />}
                                         </IconButton>
                                     </InputAdornment>
                                 ),
                             }}
                         ></TextField>
+                        <TextField
+                            value={userName}
+                            disabled={isJoined}
+                            label='ユーザー名'
+                            onChange={(e) => setUserName(e.target.value)}
+                            variant='filled'
+                        ></TextField>
+                        {isJoined ? (
+                            <Button variant='contained' color='error' onClick={Left}>
+                                Left
+                            </Button>
+                        ) : (
+                            <Button variant='contained' onClick={Join}>
+                                Join
+                            </Button>
+                        )}
+                        <div>
+                            <span>
+                                この部屋のID: {roomId.current}
+                                <IconButton
+                                    aria-label='copy'
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(roomId.current);
+                                        Checked();
+                                    }}
+                                >
+                                    {' '}
+                                    {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
+                                </IconButton>
+                            </span>
+                        </div>
                     </div>
-                    <div>
-                        <span>
-                            この部屋のID: {roomId.current}
-                            <IconButton
-                                aria-label='copy'
-                                onClick={() => {
-                                    navigator.clipboard.writeText(roomId.current);
-                                    Checked();
-                                }}
-                            >
-                                {' '}
-                                {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
-                            </IconButton>
-                        </span>
-                    </div>
-                    <ShowChat></ShowChat>
-                </>
-            ) : (
-                <></>
-            )}
+
+                </div>
+                {isJoined ? (
+                    <>
+                        <View style={{ width: '35%', height: '100%', flex: 1, flexDirection: 'column', overflow: 'scroll', position: 'fixed', right: 0 }}>
+                            <div>
+                                <ShowChat></ShowChat>
+
+                            </div><div>
+                                <TextField
+                                    style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0 }}
+                                    value={sendMessage}
+                                    onChange={(e) => {
+                                        setSendMessage(e.target.value);
+                                    }}
+                                    variant='filled'
+                                    InputProps={{
+                                        endAdornment: (
+                                            <InputAdornment position='end'>
+                                                <IconButton
+                                                    onClick={handleSubmit}
+                                                    edge='end'
+                                                    color='primary'
+                                                    disabled={sendMessage === ''}
+                                                >
+                                                    {<Send />}
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                ></TextField>
+                            </div>
+
+                        </View>
+                    </>
+                ) : (
+                    <></>
+                )}</View>
             {isPainter && (
                 <>
                     <h3>メンバー数:{Object.keys(userDictionary).length}</h3>
@@ -472,25 +500,25 @@ export const Room = () => {
                         }}
                         canvasOverRay={() => {
                             return (<>
-                                    <Typography
+                                <Typography
 
-                                        variant={"h6"}>
-                                        <Balloon ref={balloonRef}></Balloon>
-                                        {GameState.WAIT_START !== stateGameState ?
-                                            "メンバーが集まるまでお待ちください" :
-                                            "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
-                                        }
+                                    variant={"h6"}>
+                                    <Balloon ref={balloonRef}></Balloon>
+                                    {GameState.WAIT_START !== stateGameState ?
+                                        "メンバーが集まるまでお待ちください" :
+                                        "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                    }
 
-                                    </Typography>
-                                    <p>
-                                        <Button variant={"contained"}
-                                                disabled={GameState.WAIT_START !== stateGameState}
-                                                onClick={() => {
-                                                    SetGameState(GameState.DRAW, () => {
-                                                        drawZoneRef.current.start();
-                                                    })
-                                                }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                                    </p></>
+                                </Typography>
+                                <p>
+                                    <Button variant={"contained"}
+                                        disabled={GameState.WAIT_START !== stateGameState}
+                                        onClick={() => {
+                                            SetGameState(GameState.DRAW, () => {
+                                                drawZoneRef.current.start();
+                                            })
+                                        }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                </p></>
                             )
                         }}
                     />
@@ -498,7 +526,7 @@ export const Room = () => {
             )}
             {getGameState() === GameState.CHAT && imgUrl !== '' &&
                 <>
-                    <img src={imgUrl} alt={"書かれたもの"}/>
+                    <img src={imgUrl} alt={"書かれたもの"} />
                     {!isPainter && <TextField
                         value={answer}
                         onChange={(e) => {
@@ -516,7 +544,7 @@ export const Room = () => {
                                         color='primary'
                                         disabled={answer === '' || ansLocked}
                                     >
-                                        {ansLocked ? <Lock/> : <LockOpen/>}
+                                        {ansLocked ? <Lock /> : <LockOpen />}
                                     </IconButton>
                                 </InputAdornment>
                             ),
@@ -524,7 +552,7 @@ export const Room = () => {
                     ></TextField>}
                 </>
             }
-            {getGameState() === GameState.CHECK_ANSWER && isPainter && answerDatas.length !== 0 &&
+            {getGameState() === GameState.CHECK_ANSWER && answerDatas.length !== 0 &&
                 <>
                     <div>
                         <TableContainer component={Paper}>
@@ -533,7 +561,7 @@ export const Room = () => {
                                     <TableRow>
                                         <TableCell>名前</TableCell>
                                         <TableCell>回答</TableCell>
-                                        <TableCell>正誤</TableCell>
+                                        {isPainter ? <TableCell>正誤</TableCell> : <></>}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
@@ -549,7 +577,7 @@ export const Room = () => {
                                             <TableCell>
                                                 {ans.answer}
                                             </TableCell>
-                                            <TableCell>
+                                            {isPainter ? <TableCell>
                                                 <Checkbox
                                                     checked={ans.isCorrect}
                                                     onChange={(event) => {
@@ -561,8 +589,8 @@ export const Room = () => {
                                                         )
                                                     }}
                                                     inputProps={{ 'aria-label': 'controlled' }}
-                                                ><IconButton>{ans.isCorrect ? <CheckIcon/> : <ClearIcon/>}</IconButton></Checkbox>
-                                            </TableCell>
+                                                ><IconButton>{ans.isCorrect ? <CheckIcon /> : <ClearIcon />}</IconButton></Checkbox>
+                                            </TableCell> : <></>}
                                         </TableRow>
                                     ))
                                     }
@@ -576,5 +604,22 @@ export const Room = () => {
         </div>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        width: '50%',
+        flex: 1,
+    },
+    row: {
+        flexDirection: 'row',
+    },
+    col: {
+        flexDirection: 'column',
+    },
+    chatbox: {
+        display: 'flex',
+        overflow: 'scroll',
+    },
+});
 
 export default Room;

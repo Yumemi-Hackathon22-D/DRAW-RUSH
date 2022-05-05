@@ -17,7 +17,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
             clearCanvas() {
                 clear();
             },
-            start :()=>{
+            start: () => {
                 setTime(3);
                 clear();
                 startTimer();
@@ -148,25 +148,27 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
 
     return (
         <div>
-            <Typography variant={"h5"}>お題:{props.odai} <span className={"timer"}>{time.toFixed(1)}</span></Typography>
+            <div>
+                <Typography variant={"h5"}>お題:{props.odai} <span className={"timer"}>{time.toFixed(1)}</span></Typography>
 
-            {beforeStart &&
-                <div className={"blocker"}>
+                {beforeStart &&
+                    <div className={"blocker"}>
 
-                    {props.canvasOverRay()}
+                        {props.canvasOverRay()}
 
-                </div>
-            }
-            <canvas
-                className={'canvas board'}
-                ref={canvasRef}
-                onPointerDown={clickHandler}
-                onPointerEnter={clickHandler}
-                onPointerUp={pointerOutHandler}
-                onPointerOut={pointerOutHandler}
-                onPointerMove={pointerMoveHandler}
-            > </canvas>
-            <Button onClick={clear}>clear</Button>
+                    </div>
+                }
+                <canvas
+                    className={'canvas board'}
+                    ref={canvasRef}
+                    onPointerDown={clickHandler}
+                    onPointerEnter={clickHandler}
+                    onPointerUp={pointerOutHandler}
+                    onPointerOut={pointerOutHandler}
+                    onPointerMove={pointerMoveHandler}
+                > </canvas>
+            </div>
+            <Button variant='contained' onClick={clear}>Canvas clear</Button>
         </div>
     );
 });
