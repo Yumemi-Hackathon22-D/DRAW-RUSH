@@ -367,6 +367,17 @@ export const Room = () => {
         })
 
     }, [answer]);
+    const SubmitResult=()=>{
+        const Async= async () => {
+            for (const ans of answerDatas) {
+                await updateDoc(doc(collection(roomRef.current, '/members/'), ans.userId), {
+                    isCorrect: ans.isCorrect
+                })
+            }
+        }
+        Async().then(()=>{SetGameState(GameState.RESULT)})
+
+    }
     return (
         <div>
             <div>
@@ -416,7 +427,7 @@ export const Room = () => {
                                             color='primary'
                                             disabled={sendMessage === ''}
                                         >
-                                            {<Send />}
+                                            {<Send/>}
                                         </IconButton>
                                     </InputAdornment>
                                 ),
@@ -434,7 +445,7 @@ export const Room = () => {
                                 }}
                             >
                                 {' '}
-                                {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
+                                {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
                             </IconButton>
                         </span>
                     </div>
@@ -461,25 +472,25 @@ export const Room = () => {
                         }}
                         canvasOverRay={() => {
                             return (<>
-                                <Typography
+                                    <Typography
 
-                                    variant={"h6"}>
-                                    <Balloon ref={balloonRef}></Balloon>
-                                    {GameState.WAIT_START !== stateGameState ?
-                                        "メンバーが集まるまでお待ちください" :
-                                        "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
-                                    }
+                                        variant={"h6"}>
+                                        <Balloon ref={balloonRef}></Balloon>
+                                        {GameState.WAIT_START !== stateGameState ?
+                                            "メンバーが集まるまでお待ちください" :
+                                            "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                        }
 
-                                </Typography>
-                                <p>
-                                    <Button variant={"contained"}
-                                        disabled={GameState.WAIT_START !== stateGameState}
-                                        onClick={() => {
-                                            SetGameState(GameState.DRAW, () => {
-                                                drawZoneRef.current.start();
-                                            })
-                                        }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                                </p></>
+                                    </Typography>
+                                    <p>
+                                        <Button variant={"contained"}
+                                                disabled={GameState.WAIT_START !== stateGameState}
+                                                onClick={() => {
+                                                    SetGameState(GameState.DRAW, () => {
+                                                        drawZoneRef.current.start();
+                                                    })
+                                                }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                    </p></>
                             )
                         }}
                     />
@@ -487,7 +498,7 @@ export const Room = () => {
             )}
             {getGameState() === GameState.CHAT && imgUrl !== '' &&
                 <>
-                    <img src={imgUrl} alt={"書かれたもの"} />
+                    <img src={imgUrl} alt={"書かれたもの"}/>
                     {!isPainter && <TextField
                         value={answer}
                         onChange={(e) => {
@@ -505,7 +516,7 @@ export const Room = () => {
                                         color='primary'
                                         disabled={answer === '' || ansLocked}
                                     >
-                                        {ansLocked ? <Lock /> : <LockOpen />}
+                                        {ansLocked ? <Lock/> : <LockOpen/>}
                                     </IconButton>
                                 </InputAdornment>
                             ),
@@ -550,7 +561,7 @@ export const Room = () => {
                                                         )
                                                     }}
                                                     inputProps={{ 'aria-label': 'controlled' }}
-                                                ><IconButton>{ans.isCorrect ? <CheckIcon /> : <ClearIcon />}</IconButton></Checkbox>
+                                                ><IconButton>{ans.isCorrect ? <CheckIcon/> : <ClearIcon/>}</IconButton></Checkbox>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -558,8 +569,7 @@ export const Room = () => {
                                 </TableBody>
                             </Table>
                         </TableContainer>
-                        <Button variant={"contained"} onClick={() => {
-                        }}>送信</Button>
+                        <Button variant={"contained"} onClick={SubmitResult}>送信</Button>
                     </div>
                 </>
             }
