@@ -61,6 +61,7 @@ export const Room = () => {
     const [sentAnswer, setSentAnswer] = useState(false);
     const [answer, setAnswer] = useState('');
     const [answerDatas, setAnswerDatas] = useState([]);
+    const [isSentData, setIsSentData] = useState(false);
     const storageReference = storageRef(
         storage,
         roomId.current + '.jpg'
@@ -156,15 +157,17 @@ export const Room = () => {
             </View>
         );
     };
-    const SetGameState = (state, then = () => {
+    const SetGameState = async (state, then = () => {
     }) => {
         console.log(state);
         console.log(roomRef);
-        updateDoc(roomRef.current, { State: state }).then(() => {
+        await updateDoc(roomRef.current, { State: state }).then(() => {
             setGameState(state)
             then();
         });
     };
+
+
     const Join = useCallback(() => {
         let createSelf = false;
         if (
@@ -235,6 +238,17 @@ export const Room = () => {
             return id;
         };
 
+        const showIsCorrect = (isCorrect) => {
+            console.log("called")
+            if (isCorrect) {
+                console.log("せいかーい")
+            }
+            else {
+                console.log("ふせいかーい")
+            }
+            SetGameState(GameState.WAIT_START);
+        }
+
         JoinRoom().then((id) => {
             if (id === '') {
                 alert('待機状態でなかったため、入れませんでした');
@@ -250,10 +264,21 @@ export const Room = () => {
                         console.log(data);
                         setroomName(data.Name);
                         setGameState(data.State);
+
                         setPainter(data.Painter);
                     },
                 })
             );
+
+            console.log(answerDatas)
+            // if (!!data.isCorrect) {
+            //     setGameState(GameState.WAIT_START);
+            //     if (data.userId === userId.current) {
+            //         showIsCorrect(data.isCorrect);
+            //     }
+            // }
+
+
             firestoreListenersRef.current.push(
                 onSnapshot(q, {
                     next: (querySnapshot) => {
@@ -266,7 +291,7 @@ export const Room = () => {
                         });
                         setUserName(tmp[userId.current]);
                         setUserDictionary(tmp);
-                        console.log(balloonRef);
+                        // console.log(balloonRef);
                         // balloonRef.current.syncUsers(tmp);
 
                         const Alone = async () => {
@@ -280,13 +305,12 @@ export const Room = () => {
                             SetGameState(GameState.WAIT_MORE_MEMBER);
                         };
 
-
-
                         const userIds = Object.keys(tmp)
                         if (userIds.length <= 1) {
                             Alone(); //独りぼっちならPainterを自分にかつ状態をWAIT_MORE_MEMBERに
                         } else {
                             console.log(getGameState())
+
                             if (!userIds.includes(getPainter()) && userIds[0] === userId.current) {
                                 updateDoc(roomRef.current, {
                                     Painter: userId.current,
@@ -295,9 +319,7 @@ export const Room = () => {
                                 });
                             }
                             if (getPainter() === userId.current) {
-                                if (
-                                    getGameState() === GameState.WAIT_MORE_MEMBER
-                                ) {
+                                if (getGameState() === GameState.WAIT_MORE_MEMBER) {
                                     SetGameState(GameState.WAIT_START);
                                 } else if (GameState.CHAT) {
                                     if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
@@ -338,6 +360,7 @@ export const Room = () => {
                                     })
                                 }
                             }
+
                         }
                     },
                 })
@@ -403,7 +426,6 @@ export const Room = () => {
             }
         }
         Async().then(() => { SetGameState(GameState.RESULT) })
-
     }
     return (
         <div>
@@ -430,28 +452,33 @@ export const Room = () => {
                             variant='filled'
                         ></TextField>
                         {isJoined ? (
-                            <Button variant='contained' color='error' onClick={Left}>
-                                Left
-                            </Button>
+                            <div>
+                                <Button variant='contained' color='error' onClick={Left}>
+                                    Left
+                                </Button>
+                                <div>
+                                    <span>
+                                        この部屋のID: {roomId.current}
+                                        <IconButton
+                                            aria-label='copy'
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(roomId.current);
+                                                Checked();
+                                            }}
+                                        >
+                                            {' '}
+                                            {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
+                                        </IconButton>
+                                    </span>
+                                </div>
+                            </div>
                         ) : (
                             <Button variant='contained' onClick={Join}>
                                 Join
                             </Button>
                         )}
                         <div>
-                            <span>
-                                この部屋のID: {roomId.current}
-                                <IconButton
-                                    aria-label='copy'
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(roomId.current);
-                                        Checked();
-                                    }}
-                                >
-                                    {' '}
-                                    {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
-                                </IconButton>
-                            </span>
+
                         </div>
                     </div>
 
@@ -623,22 +650,5 @@ export const Room = () => {
         </div>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        width: '50%',
-        flex: 1,
-    },
-    row: {
-        flexDirection: 'row',
-    },
-    col: {
-        flexDirection: 'column',
-    },
-    chatbox: {
-        display: 'flex',
-        overflow: 'scroll',
-    },
-});
 
 export default Room;
