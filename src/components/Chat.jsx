@@ -513,7 +513,7 @@ export const Room = () => {
                     ></TextField>}
                 </>
             }
-            {getGameState() === GameState.CHECK_ANSWER && answerDatas.length !== 0 &&
+            {getGameState() === GameState.CHECK_ANSWER && isPainter && answerDatas.length !== 0 &&
                 <>
                     <div>
                         <TableContainer component={Paper}>
