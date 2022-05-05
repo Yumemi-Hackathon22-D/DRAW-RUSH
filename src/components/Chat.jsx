@@ -213,7 +213,6 @@ export const Room = () => {
                     name: userName,
                 });
                 SetUserId(userRef.id);
-                console.log(userRef.id);
             }
             if (createSelf) {
                 //自分が作成者ならPainterを自分に
@@ -260,9 +259,6 @@ export const Room = () => {
                             console.log(doc.data());
                             tmp[doc.id] = doc.data().name;
                         });
-
-                        console.log(userId.current);
-
                         setUserName(tmp[userId.current]);
                         setUserDictionary(tmp);
                         console.log(balloonRef);
