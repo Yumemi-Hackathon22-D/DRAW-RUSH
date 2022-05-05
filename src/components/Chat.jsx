@@ -208,11 +208,12 @@ export const Room = () => {
         const SetRoom = async (roomId) => {
             console.log(roomId);
             roomRef.current = await doc(allRoomRef, roomId);
-            if (cookie === null || cookie === '' || !Object.keys(cookie).length) {
+            if (cookie.roomId === undefined || cookie.roomId === '' || cookie.userId === undefined || cookie.userId === "" || !Object.keys(cookie).length) {
                 const userRef = await addDoc(collection(roomRef.current, '/members/'), {
                     name: userName,
                 });
                 SetUserId(userRef.id);
+                console.log(userRef.id);
             }
             if (createSelf) {
                 //自分が作成者ならPainterを自分に
@@ -260,6 +261,7 @@ export const Room = () => {
                             tmp[doc.id] = doc.data().name;
                         });
 
+                        console.log(userId.current);
 
                         setUserName(tmp[userId.current]);
                         setUserDictionary(tmp);
