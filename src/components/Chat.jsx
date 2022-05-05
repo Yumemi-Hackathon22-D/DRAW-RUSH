@@ -21,6 +21,7 @@ import DrawZone from './DrawZone';
 import { ref as storageRef, uploadString, getBlob } from 'firebase/storage';
 import useCacheState from '../CacheState'
 import Balloon from './Balloon';
+import ClearIcon from '@mui/icons-material/Clear'
 
 const GameState = {
     //enum風
@@ -353,8 +354,10 @@ export const Room = () => {
             removeCookie('userId');
             removeCookie('roomId');
             setIsJoined(false);
+            setAnsLocked(false)
+            setAnswer('');
         });
-    }, [userDictionary, userName, messages, stateGameState, roomName, isJoined]);
+    }, [userDictionary, userName, messages, stateGameState, roomName, isJoined, ansLocked, answer]);
 
     const LockAnswer = useCallback(() => {
         updateDoc(doc(collection(roomRef.current, '/members/'), userId.current), {
@@ -547,7 +550,7 @@ export const Room = () => {
                                                         )
                                                     }}
                                                     inputProps={{ 'aria-label': 'controlled' }}
-                                                />
+                                                ><IconButton>{ans.isCorrect ? <CheckIcon /> : <ClearIcon />}</IconButton></Checkbox>
                                             </TableCell>
                                         </TableRow>
                                     ))
