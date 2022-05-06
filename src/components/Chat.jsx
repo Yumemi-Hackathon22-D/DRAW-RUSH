@@ -626,7 +626,7 @@ export const Room = () => {
                             </View> : <></>}
                     </>
                 }
-                {getGameState() === GameState.CHECK_ANSWER||getGameState()===GameState.RESULT && answerDatas.length !== 0 &&
+                {(getGameState() === GameState.CHECK_ANSWER||getGameState()===GameState.RESULT) && answerDatas.length !== 0 &&
                     <>
                         <div>
                             <TableContainer component={Paper}>
@@ -635,8 +635,7 @@ export const Room = () => {
                                         <TableRow>
                                             <TableCell>名前</TableCell>
                                             <TableCell>回答</TableCell>
-                                            {isPainter ? <TableCell>正誤(正しければ<Checkbox checked={true}
-                                                                                      defaultChecked={true}/>)</TableCell> : <></>}
+                                            {(isPainter||getGameState()===GameState.RESULT) ? <TableCell>正誤(正しければ<Checkbox checked={true}/>)</TableCell> : <></>}
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -652,7 +651,7 @@ export const Room = () => {
                                                 <TableCell>
                                                     {ans.answer}
                                                 </TableCell>
-                                                {isPainter||getGameState()===GameState.RESULT ? <TableCell>
+                                                {(isPainter||getGameState()===GameState.RESULT) ? <TableCell>
                                                     <Checkbox
                                                         checked={ans.isCorrect}
                                                         disabled={getGameState()===GameState.RESULT}
