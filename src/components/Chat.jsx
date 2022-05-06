@@ -23,6 +23,7 @@ import { ref as storageRef, uploadString, getBlob } from 'firebase/storage';
 import useCacheState from '../CacheState'
 import Balloon from './Balloon';
 import ClearIcon from '@mui/icons-material/Clear'
+import './../test.css'
 
 const GameState = {
     //enum風
@@ -163,19 +164,26 @@ export const Room = () => {
         let result = [];
         if (messages === '') return;
         for (let [key, i] of Object.entries(messages)) {
+            let articleClass = i.userId === userId.current ? "msg-self" : "msg-remote"
+            articleClass += " msg-container"
             result.push(
-                <tr key={key}>
-                    <th>{GetUserNameById(i.userId)}</th>
-                    <td>{i.msg}</td>
-                    <td>{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</td>
-                </tr>
+                <article class={articleClass}>
+                    <div class="msg-box">
+                        <div class="flr">
+                            <p class="msg" id = "msg-0">{i.msg}</p>
+                        </div>
+                        <span class="timestamp"><span class="username">{GetUserNameById(i.userId)}</span>-<span class="posttime">{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
+                    </div>
+                </article>
             );
         }
+
+        
         return (
-            <View style={{ flex: 5 }}>
-                <table>
-                    <tbody>{result}</tbody>
-                </table>
+            <View style={{}}>
+
+                <section class="chat-window">{result}
+		</section>
             </View>
         );
     };
@@ -511,16 +519,14 @@ export const Room = () => {
                             flex: 1,
                             flexDirection: 'column',
                             overflow: 'scroll',
+                            overflowX: 'hidden',
                             position: 'fixed',
                             right: 0
                         }}>
-                            <div>
                                 <ShowChat></ShowChat>
-
-                            </div>
-                            <div>
+                            {/* <div> */}
                                 <TextField
-                                    style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0 }}
+                                    style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0, backgroundColor: 'white'}}
                                     value={sendMessage}
                                     onChange={(e) => {
                                         setSendMessage(e.target.value);
@@ -541,7 +547,7 @@ export const Room = () => {
                                         ),
                                     }}
                                 ></TextField>
-                            </div>
+                            {/* </div> */}
 
                         </View>
                     </>
