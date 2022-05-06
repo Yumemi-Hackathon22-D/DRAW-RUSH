@@ -155,14 +155,17 @@ export const Room = () => {
             setIsCopied(false);
         }, 1000);
     };
-    const GetUserNameById = (uid) => userDictionary[uid] || 'Unknown太郎'
+    const GetUserNameById = (uid) => {
+        return (userDictionary[uid] || 'Unknown太郎');
+    }
+
     const ShowChat = () => {
         let result = [];
         if (messages === '') return;
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
-                    <th>{GetUserNameById()}</th>
+                    <th>{GetUserNameById(i.userId)}</th>
                     <td>{i.msg}</td>
                     <td>{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</td>
                 </tr>
