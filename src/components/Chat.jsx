@@ -64,7 +64,7 @@ export const Room = () => {
     const [answer, setAnswer] = useState('');
     const [answerDatas, setAnswerDatas] = useState([]);
     const [odai,setOdai]=useState('');
-    
+    const [isCompositionend, setIsCompositionend] = useState(false);
 
     const roomRef = useRef();
     const isPainter =
@@ -184,6 +184,23 @@ url.createObjectURL(blob)
             timeStamp: serverTimestamp(),
         });
         setSendMessage('');
+    };
+
+    const jaRegexp = /^[\u30a0-\u30ff\u3040-\u309f\u3005-\u3006\u30e0-\u9fcf]+$/
+
+    const handleSubmitKey = async (e) => {
+        e.preventDefault();
+        if (sendMessage.match(jaRegexp) && !isCompositionend) {
+            return
+          }
+         {
+        setIsCompositionend(false);
+        let messageRef = push(ref(db, 'rooms/' + roomId.current + '/messages/'), {
+            userId: userId.current,
+            msg: sendMessage,
+            timeStamp: serverTimestamp(),
+        });
+        setSendMessage('');}
     };
 
     const Checked = async () => {
@@ -553,11 +570,17 @@ url.createObjectURL(blob)
                                 <ShowChat ></ShowChat>
                             {/* <div> */}
                                 <TextField
+                                    label="お話しよう！"
                                     style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0, backgroundColor: 'white'}}
                                     value={sendMessage}
+                                    onKeyDown={(e) => {
+                                        if(e.key === 'Enter') handleSubmitKey(e) }}
                                     onChange={(e) => {
                                         setSendMessage(e.target.value);
                                     }}
+                                    onCompositionEnd={() => {
+                                        setIsCompositionend(true)
+                                      }}
                                     variant='filled'
                                     InputProps={{
                                         endAdornment: (
