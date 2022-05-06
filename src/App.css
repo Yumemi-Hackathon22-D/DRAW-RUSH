@@ -13,6 +13,44 @@
   }
 }
 
+.board {
+ /* position: relative;*/
+  z-index: -1;
+}
+
+.fukidasi {
+  z-index: 4;
+}
+
+.fukidasi .fukidasi.left {
+  position: absolute;
+transform-origin: left top;
+animation: balloonAnime 3s ease-out 0s infinite normal both;
+animation: balloonMove 3s ease-in-out 0s infinite normal both;
+}
+
+.fukidasi .fukidasi.right {
+  position: absolute;
+  transform-origin: right top;
+  animation: balloonAnime 3s ease-out 0s infinite normal both;
+  animation: balloonMove 3s ease-in-out 0s infinite normal both;
+  }
+
+  @keyframes balloonMove {
+    0% {transform: translateY(0px)}
+    50% {transform: translateY(50px)}
+    100% {transform: translateY(100px)}
+  
+  }
+@keyframes balloonAnime {
+  0% {transform: scale(1);
+  opacity: 1}
+  50% {transform: scale(1.1);
+  opacity: 1}
+  100% {transform: scale(1);
+  opacity: 0;}
+}
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
@@ -35,4 +73,58 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+
+@font-face {
+  /*https://github.com/keshikan/DSEG*/
+  font-family: '7Seg';
+  src: url('DSEG7Modern-BoldItalic.woff2') format('woff2');
+}
+.timer{
+  font-family: '7Seg', serif;
+  font-size: xx-large;
+}
+
+.canvas{
+  border: solid;
+  touch-action: none;
+  background: white;
+  width: 100%;
+  aspect-ratio: auto 16/9;
+  z-index: -1;
+}
+
+.blocker{
+  z-index: 1;
+  border: solid;
+  position: absolute;
+  width: 100%;
+  aspect-ratio: auto 16/9;
+  background: lightgray;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+
+}
+
+/* デフォルト：980px以上用（PC用）の記述 */
+@media screen and (max-width: 979px) {
+  /* 979px以下用（タブレット用）の記述 */
+}
+@media screen and (max-width: 767px) {
+  /* 767px以下用（タブレット／スマートフォン用）の記述 */
+}
+@media screen and (max-width: 900px) {
+  .canvas{
+  width: 95%;
+
+}
+  .blocker{
+    width: 95%;
+
+  } /* 479px以下用（スマートフォン用）の記述 */
 }
