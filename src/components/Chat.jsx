@@ -40,6 +40,7 @@ const GameState = {
 };
 
 export const Room = () => {
+    const chatscrollRef = useRef('');
     const allRoomRef = collection(firestore, 'rooms');
     //呼び出せる関数はDrawZone.jsxのL14らへんに定義してあります。
     const drawZoneRef = useRef();
@@ -62,8 +63,8 @@ export const Room = () => {
     const [sentAnswer, setSentAnswer] = useState(false);
     const [answer, setAnswer] = useState('');
     const [answerDatas, setAnswerDatas] = useState([]);
-    const [isSentData, setIsSentData] = useState(false);
     const [odai,setOdai]=useState('');
+    
 
     const roomRef = useRef();
     const isPainter =
@@ -91,9 +92,9 @@ export const Room = () => {
         setSentAnswer(false);
         setAnswer('');
         setAnswerDatas([]);
-        setIsSentData(false);
         setOdai('')
     }
+    
     //ゲームの進行状態を監視
     useEffect(() => {
         console.log(getGameState());
@@ -194,6 +195,14 @@ url.createObjectURL(blob)
     const GetUserNameById = (uid) => {
         return (userDictionary[uid] || 'Unknown太郎');
     }
+    const scroll = () => {
+        console.log("called scroll")
+        console.log(chatscrollRef)
+        if (chatscrollRef && chatscrollRef.current){ 
+        const height = chatscrollRef.current.scrollHeight - chatscrollRef.current.clientHeight;
+        console.log("height: " + height)
+        chatscrollRef.current.scrollIntoView();
+    }}
 
     const ShowChat = () => {
         let result = [];
@@ -212,15 +221,19 @@ url.createObjectURL(blob)
                 </article>
             );
         }
+        scroll();
+
+        
 
 
         return (
             <View style={{}}>
 
-                <section class="chat-window">{result}
+                <section ref={chatscrollRef} class="chat-window">{result}
 		</section>
             </View>
-        );
+        )
+        
     };
     const SetGameState = async (state) => {
         console.log(state);
@@ -231,6 +244,7 @@ url.createObjectURL(blob)
 
 
     const Join = useCallback(() => {
+        
         let createSelf = false;
         if (
             (userName === '' || roomName === '') &&
@@ -298,17 +312,7 @@ url.createObjectURL(blob)
             }
             await SetRoom(id);
             return id;
-        };
-
-        const showIsCorrect = (isCorrect) => {
-            console.log("called")
-            if (isCorrect) {
-                console.log("せいかーい")
-            } else {
-                console.log("ふせいかーい")
-            }
-            SetGameState(GameState.WAIT_START);
-        }
+        };       
 
         JoinRoom().then((id) => {
             if (id === '') {
@@ -317,6 +321,8 @@ url.createObjectURL(blob)
             }
             const roomDoc = doc(allRoomRef, id); //Not
             const q = collection(roomDoc, '/members/');
+
+            
 
             firestoreListenersRef.current.push(
                 onSnapshot(roomDoc, {
@@ -330,15 +336,6 @@ url.createObjectURL(blob)
                     },
                 })
             );
-
-            console.log(answerDatas)
-            // if (!!data.isCorrect) {
-            //     setGameState(GameState.WAIT_START);
-            //     if (data.userId === userId.current) {
-            //         showIsCorrect(data.isCorrect);
-            //     }
-            // }
-
 
             firestoreListenersRef.current.push(
                 onSnapshot(q, {
@@ -561,9 +558,10 @@ url.createObjectURL(blob)
                             overflow: 'scroll',
                             overflowX: 'hidden',
                             position: 'fixed',
-                            right: 0
+                            right: 0,
+                            backgroundColor: "#2f323b",
                         }}>
-                                <ShowChat></ShowChat>
+                                <ShowChat ></ShowChat>
                             {/* <div> */}
                                 <TextField
                                     style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0, backgroundColor: 'white'}}

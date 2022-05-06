@@ -14,9 +14,11 @@
 }
 .chat-window {
   flex: auto;
-  min-height: calc(100% - 56px) !important;
-  overflow-y: auto;
-  background: #2f323b;
+  min-height: calc(100vh - 56px) !important;
+  max-height: calc(100vh - 56px) !important;
+  overflow-y: overlay;
+  
+  
 }
 .chat-input {
   flex: 0 0 auto;
