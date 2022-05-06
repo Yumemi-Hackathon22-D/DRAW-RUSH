@@ -190,6 +190,7 @@ url.createObjectURL(blob)
 
     const handleSubmitKey = async (e) => {
         e.preventDefault();
+        if (sendMessage.trim() === '') return
         if (sendMessage.match(jaRegexp) && !isCompositionend) {
             return
           }
@@ -589,7 +590,7 @@ url.createObjectURL(blob)
                                                     onClick={handleSubmit}
                                                     edge='end'
                                                     color='primary'
-                                                    disabled={sendMessage === ''}
+                                                    disabled={sendMessage.trim() === ''}
                                                 >
                                                     {<Send/>}
                                                 </IconButton>
