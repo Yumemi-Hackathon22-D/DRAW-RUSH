@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
 import { ref, push, set, serverTimestamp, onValue, off, onChildAdded } from 'firebase/database';
-import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
 import {
     TextField,
     Button,
@@ -42,7 +42,6 @@ export const Room = () => {
     //呼び出せる関数はDrawZone.jsxのL14らへんに定義してあります。
     const drawZoneRef = useRef();
     const [getGameState, setGameState, stateGameState] = useCacheState('');
-    //const painter = useRef('');
     const [getPainter, setPainter, statePainter] = useCacheState('');
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
@@ -111,12 +110,23 @@ export const Room = () => {
                 break;
             }
             case GameState.RESULT: {
-                if (isPainter){
+                if (isPainter) {
 
-                }else{
-                    getDoc(doc(collection(roomRef.current, '/members/'), userId.current)).then((d)=>{
-                        console.log(d.data())
-                        console.log(d.data().isCorrect)
+                } else {
+
+                    getDocs(collection(roomRef.current, "members")).then((querySnapshot) => {
+                        let tmp_answerDatas = [];
+                        querySnapshot.forEach((doc) => {
+                            if (getPainter() !== doc.id) {
+                                const data = doc.data()
+                                tmp_answerDatas.push({
+                                    answer: data.answer,
+                                    userId: doc.id,
+                                    isCorrect: data.isCorrect
+                                });
+                            }
+                        });
+                        setAnswerDatas(tmp_answerDatas);
                     })
                 }
                 break;
@@ -145,13 +155,14 @@ export const Room = () => {
             setIsCopied(false);
         }, 1000);
     };
+    const GetUserNameById = (uid) => userDictionary[uid] || 'Unknown太郎'
     const ShowChat = () => {
         let result = [];
         if (messages === '') return;
         for (let [key, i] of Object.entries(messages)) {
             result.push(
                 <tr key={key}>
-                    <th>{userDictionary[i.userId] || 'Unknown太郎'}</th>
+                    <th>{GetUserNameById()}</th>
                     <td>{i.msg}</td>
                     <td>{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</td>
                 </tr>
@@ -168,7 +179,7 @@ export const Room = () => {
     const SetGameState = async (state, then = () => {
     }) => {
         console.log(state);
-        console.log(roomRef);
+        console.log(roomRef.current);
         await updateDoc(roomRef.current, { State: state }).then(() => {
             setGameState(state)
             then();
@@ -250,8 +261,7 @@ export const Room = () => {
             console.log("called")
             if (isCorrect) {
                 console.log("せいかーい")
-            }
-            else {
+            } else {
                 console.log("ふせいかーい")
             }
             SetGameState(GameState.WAIT_START);
@@ -329,7 +339,7 @@ export const Room = () => {
                             if (getPainter() === userId.current) {
                                 if (getGameState() === GameState.WAIT_MORE_MEMBER) {
                                     SetGameState(GameState.WAIT_START);
-                                } else if (GameState.CHAT) {
+                                } else if (getGameState() === GameState.CHAT) {
                                     if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
                                         SetGameState(GameState.CHECK_ANSWER, () => {
                                             let tmp_answerDatas = [];
@@ -339,7 +349,6 @@ export const Room = () => {
                                                     tmp_answerDatas.push({
                                                         answer: data.answer,
                                                         userId: doc.id,
-                                                        name: data.name,
                                                         isCorrect: false
                                                     });
                                                 }
@@ -348,8 +357,7 @@ export const Room = () => {
                                         })
                                     }
                                 }
-                            }
-                            else if (GameState.CHAT) {
+                            } else if (getGameState() === GameState.CHAT) {
                                 if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
                                     SetGameState(GameState.CHECK_ANSWER, () => {
                                         let tmp_answerDatas = [];
@@ -359,7 +367,6 @@ export const Room = () => {
                                                 tmp_answerDatas.push({
                                                     answer: data.answer,
                                                     userId: doc.id,
-                                                    name: data.name,
                                                     isCorrect: false
                                                 });
                                             }
@@ -433,7 +440,9 @@ export const Room = () => {
                 })
             }
         }
-        Async().then(() => { SetGameState(GameState.RESULT) })
+        Async().then(() => {
+            SetGameState(GameState.RESULT)
+        })
     }
     return (
         <div>
@@ -475,7 +484,7 @@ export const Room = () => {
                                             }}
                                         >
                                             {' '}
-                                            {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
+                                            {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
                                         </IconButton>
                                     </span>
                                 </div>
@@ -493,11 +502,20 @@ export const Room = () => {
                 </div>
                 {isJoined ? (
                     <>
-                        <View style={{ width: '35%', height: '100%', flex: 1, flexDirection: 'column', overflow: 'scroll', position: 'fixed', right: 0 }}>
+                        <View style={{
+                            width: '35%',
+                            height: '100%',
+                            flex: 1,
+                            flexDirection: 'column',
+                            overflow: 'scroll',
+                            position: 'fixed',
+                            right: 0
+                        }}>
                             <div>
                                 <ShowChat></ShowChat>
 
-                            </div><div>
+                            </div>
+                            <div>
                                 <TextField
                                     style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0 }}
                                     value={sendMessage}
@@ -514,7 +532,7 @@ export const Room = () => {
                                                     color='primary'
                                                     disabled={sendMessage === ''}
                                                 >
-                                                    {<Send />}
+                                                    {<Send/>}
                                                 </IconButton>
                                             </InputAdornment>
                                         ),
@@ -546,25 +564,25 @@ export const Room = () => {
                             }}
                             canvasOverRay={() => {
                                 return (<>
-                                    <Typography
+                                        <Typography
 
-                                        variant={"h6"}>
-                                        <Balloon ref={balloonRef}></Balloon>
-                                        {GameState.WAIT_START !== stateGameState ?
-                                            "メンバーが集まるまでお待ちください" :
-                                            "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
-                                        }
+                                            variant={"h6"}>
+                                            <Balloon ref={balloonRef}></Balloon>
+                                            {GameState.WAIT_START !== stateGameState ?
+                                                "メンバーが集まるまでお待ちください" :
+                                                "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                            }
 
-                                    </Typography>
-                                    <p>
-                                        <Button variant={"contained"}
-                                            disabled={GameState.WAIT_START !== stateGameState}
-                                            onClick={() => {
-                                                SetGameState(GameState.DRAW, () => {
-                                                    drawZoneRef.current.start();
-                                                })
-                                            }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                                    </p></>
+                                        </Typography>
+                                        <p>
+                                            <Button variant={"contained"}
+                                                    disabled={GameState.WAIT_START !== stateGameState}
+                                                    onClick={() => {
+                                                        SetGameState(GameState.DRAW, () => {
+                                                            drawZoneRef.current.start();
+                                                        })
+                                                    }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                        </p></>
                                 )
                             }}
                         />
@@ -576,7 +594,7 @@ export const Room = () => {
                         {!isPainter ?
 
                             <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-                                <img src={imgUrl} alt={"書かれたもの"} />
+                                <img src={imgUrl} alt={"書かれたもの"}/>
                                 <TextField
                                     value={answer}
                                     onChange={(e) => {
@@ -595,7 +613,7 @@ export const Room = () => {
                                                     color='primary'
                                                     disabled={answer === '' || ansLocked}
                                                 >
-                                                    {ansLocked ? <Lock /> : <LockOpen />}
+                                                    {ansLocked ? <Lock/> : <LockOpen/>}
                                                 </IconButton>
                                             </InputAdornment>
 
@@ -605,7 +623,7 @@ export const Room = () => {
                             </View> : <></>}
                     </>
                 }
-                {getGameState() === GameState.CHECK_ANSWER && answerDatas.length !== 0 &&
+                {getGameState() === GameState.CHECK_ANSWER||getGameState()===GameState.RESULT && answerDatas.length !== 0 &&
                     <>
                         <div>
                             <TableContainer component={Paper}>
@@ -614,7 +632,8 @@ export const Room = () => {
                                         <TableRow>
                                             <TableCell>名前</TableCell>
                                             <TableCell>回答</TableCell>
-                                            {isPainter ? <TableCell>正誤</TableCell> : <></>}
+                                            {isPainter ? <TableCell>正誤(正しければ<Checkbox checked={true}
+                                                                                      defaultChecked={true}/>)</TableCell> : <></>}
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -625,14 +644,15 @@ export const Room = () => {
                                                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                             >
                                                 <TableCell component="th" scope="row">
-                                                    {ans.name}
+                                                    {GetUserNameById(ans.userId)}
                                                 </TableCell>
                                                 <TableCell>
                                                     {ans.answer}
                                                 </TableCell>
-                                                {isPainter ? <TableCell>
+                                                {isPainter||getGameState()===GameState.RESULT ? <TableCell>
                                                     <Checkbox
                                                         checked={ans.isCorrect}
+                                                        disabled={getGameState()===GameState.RESULT}
                                                         onChange={(event) => {
                                                             setAnswerDatas((prevState) =>
                                                                 prevState.map((preAns, i) => (i === index ? {
@@ -642,7 +662,8 @@ export const Room = () => {
                                                             )
                                                         }}
                                                         inputProps={{ 'aria-label': 'controlled' }}
-                                                    ><IconButton>{ans.isCorrect ? <CheckIcon /> : <ClearIcon />}</IconButton></Checkbox>
+                                                    ><IconButton>{ans.isCorrect ? <CheckIcon/> :
+                                                        <ClearIcon/>}</IconButton></Checkbox>
                                                 </TableCell> : <></>}
                                             </TableRow>
                                         ))
@@ -650,7 +671,8 @@ export const Room = () => {
                                     </TableBody>
                                 </Table>
                             </TableContainer>
-                            {!(sentAnswer && !isPainter) || isPainter ? <Button variant={"contained"} onClick={SubmitResult}>送信</Button> : <></>}
+                            {!(sentAnswer && !isPainter) || isPainter ?
+                                <Button variant={"contained"} onClick={SubmitResult}>結果を送信</Button> : <></>}
                         </div>
                     </>
                 }
