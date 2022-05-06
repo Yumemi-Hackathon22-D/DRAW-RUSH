@@ -201,7 +201,11 @@ url.createObjectURL(blob)
         if (chatscrollRef && chatscrollRef.current){ 
         const height = chatscrollRef.current.scrollHeight - chatscrollRef.current.clientHeight;
         console.log("height: " + height)
-        chatscrollRef.current.scrollIntoView();
+        setTimeout(()=>chatscrollRef.current.scrollTo({
+            top: height,
+            left: 0,
+            behavior: 'smooth'
+        }),500);
     }}
 
     const ShowChat = () => {
@@ -227,11 +231,9 @@ url.createObjectURL(blob)
 
 
         return (
-            <View style={{}}>
-
                 <section ref={chatscrollRef} class="chat-window">{result}
 		</section>
-            </View>
+            
         )
         
     };
@@ -555,8 +557,6 @@ url.createObjectURL(blob)
                             height: '100%',
                             flex: 1,
                             flexDirection: 'column',
-                            overflow: 'scroll',
-                            overflowX: 'hidden',
                             position: 'fixed',
                             right: 0,
                             backgroundColor: "#2f323b",
