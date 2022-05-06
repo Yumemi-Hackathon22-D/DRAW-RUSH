@@ -111,6 +111,14 @@ export const Room = () => {
                 break;
             }
             case GameState.RESULT: {
+                if (isPainter){
+
+                }else{
+                    getDoc(doc(collection(roomRef.current, '/members/'), userId.current)).then((d)=>{
+                        console.log(d.data())
+                        console.log(d.data().isCorrect)
+                    })
+                }
                 break;
             }
             case GameState.END: {
