@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState, } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, } from 'react';
 import { View } from 'react-native';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
@@ -195,39 +195,31 @@ url.createObjectURL(blob)
     const GetUserNameById = (uid) => {
         return (userDictionary[uid] || 'Unknown太郎');
     }
-    const scroll = () => {
-        console.log("called scroll")
-        console.log(chatscrollRef)
-        if (chatscrollRef && chatscrollRef.current){ 
-        const height = chatscrollRef.current.scrollHeight - chatscrollRef.current.clientHeight;
-        console.log("height: " + height)
-        setTimeout(()=>chatscrollRef.current.scrollTo({
-            top: height,
-            left: 0,
-            behavior: 'smooth'
-        }),500);
-    }}
 
     const ShowChat = () => {
         let result = [];
+        useLayoutEffect(()=>{
+            if (chatscrollRef.current) chatscrollRef.current.scrollIntoView()
+        })
         if (messages === '') return;
         for (let [key, i] of Object.entries(messages)) {
             let articleClass = i.userId === userId.current ? "msg-self" : "msg-remote"
             articleClass += " msg-container"
             result.push(
-                <article class={articleClass}>
-                    <div class="msg-box">
-                        <div class="flr">
-                            <p class="msg" id = "msg-0">{i.msg}</p>
+                <article className={articleClass}>
+                    <div className="msg-box">
+                        <div className="flr">
+                            <p className="msg" id = "msg-0">{i.msg}</p>
                         </div>
-                        <span class="timestamp"><span class="username">{GetUserNameById(i.userId)}</span>-<span class="posttime">{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
+                        <span className="timestamp"><span className="username">{GetUserNameById(i.userId)}</span>-<span class="posttime">{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
                     </div>
                 </article>
             );
         }
 
         return (
-                <section ref={chatscrollRef} class="chat-window">{result}
+                <section  className="chat-window" >{result}
+                    <div ref={chatscrollRef}></div>
 		</section>
             
         )
@@ -431,7 +423,6 @@ url.createObjectURL(blob)
                 console.log(snapshot.val());
                 let selfmessages = snapshot.val();
                 setMessages(selfmessages);
-        scroll();
 
             });
         };

@@ -3,7 +3,7 @@ function getOdaiFile() {
         method: "GET",
     }).then(response => response.text())
         .then(text => {
-            const arr = text.split(/\r\n|\n/).map(x=>x.split(",")).filter(v=>!v.startsWith('//'));
+            const arr = text.split(/\r\n|\n/).filter(v=>!v.startsWith('//')&&v!=="");
             console.log(arr);
             odais=arr;
         });
