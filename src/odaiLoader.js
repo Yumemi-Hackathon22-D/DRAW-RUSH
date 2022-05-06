@@ -12,5 +12,5 @@ getOdaiFile();
 let odais;
 
 export function getRandomOdai() {
-
+   return  odais[Math.floor(Math.random()*odais.length)]
 }

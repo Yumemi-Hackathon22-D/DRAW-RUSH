@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState, } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
 import { ref, push, set, serverTimestamp, onValue, off, onChildAdded } from 'firebase/database';
-import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
+import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc, getDocs,deleteField } from 'firebase/firestore';
 import {
     TextField,
     Button,
@@ -19,10 +19,11 @@ import { Lock, LockOpen, PlayCircleOutline, Send } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DrawZone from './DrawZone';
-import { ref as storageRef, uploadString, getBlob } from 'firebase/storage';
+import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 import useCacheState from '../CacheState'
 import Balloon from './Balloon';
 import ClearIcon from '@mui/icons-material/Clear'
+import { getRandomOdai } from '../odaiLoader'
 import './../test.css'
 
 const GameState = {
@@ -62,10 +63,8 @@ export const Room = () => {
     const [answer, setAnswer] = useState('');
     const [answerDatas, setAnswerDatas] = useState([]);
     const [isSentData, setIsSentData] = useState(false);
-    const storageReference = storageRef(
-        storage,
-        roomId.current + '.jpg'
-    );
+    const [odai,setOdai]=useState('');
+
     const roomRef = useRef();
     const isPainter =
         getPainter() === userId.current && getPainter() !== '';
@@ -85,6 +84,16 @@ export const Room = () => {
             Join();
         }
     }, []);
+    const Clean=()=>{
+        balloonRef.current=undefined;
+        setImgUrl("");
+        setAnsLocked(false);
+        setSentAnswer(false);
+        setAnswer('');
+        setAnswerDatas([]);
+        setIsSentData(false);
+        setOdai('')
+    }
     //ゲームの進行状態を監視
     useEffect(() => {
         console.log(getGameState());
@@ -94,17 +103,37 @@ export const Room = () => {
             }
             case GameState.WAIT_START: {
                 //キレイキレイ
-                setImgUrl("")
+                Clean();
+                    setOdai(getRandomOdai())
+
                 break;
             }
             case GameState.DRAW: {
                 break;
             }
             case GameState.CHAT: {
-                getBlob(storageReference).then((blob) => {
+                /*getBlob().then((blob) => {
                     const url = window.URL || window.webkitURL
-                    setImgUrl(url.createObjectURL(blob));
-                })
+url.createObjectURL(blob)
+                });*/
+                getDownloadURL(storageRef(
+                    storage,
+                    roomId.current + '.jpg'
+                ))
+                    .then((url) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.responseType = 'blob';
+                        xhr.onload = (event) => {
+                            const blob = xhr.response;
+                        };
+                        xhr.open('GET', url);
+                        xhr.send();
+                        setImgUrl(url);
+                    })
+                    .catch((error) => {
+                        console.error(error)
+                        // Handle any errors
+                    });
                 break;
             }
             case GameState.CHECK_ANSWER: {
@@ -114,7 +143,7 @@ export const Room = () => {
                 if (isPainter) {
 
                 } else {
-
+                    //正解データを同期
                     getDocs(collection(roomRef.current, "members")).then((querySnapshot) => {
                         let tmp_answerDatas = [];
                         querySnapshot.forEach((doc) => {
@@ -125,9 +154,15 @@ export const Room = () => {
                                     userId: doc.id,
                                     isCorrect: data.isCorrect
                                 });
+                                updateDoc(doc.ref,{
+                                    answer:  deleteField(),
+                                    userId:  deleteField(),
+                                    isCorrect:  deleteField()
+                                });
                             }
                         });
                         setAnswerDatas(tmp_answerDatas);
+
                     })
                 }
                 break;
@@ -178,7 +213,7 @@ export const Room = () => {
             );
         }
 
-        
+
         return (
             <View style={{}}>
 
@@ -187,14 +222,11 @@ export const Room = () => {
             </View>
         );
     };
-    const SetGameState = async (state, then = () => {
-    }) => {
+    const SetGameState = async (state) => {
         console.log(state);
         console.log(roomRef.current);
-        await updateDoc(roomRef.current, { State: state }).then(() => {
-            setGameState(state)
-            then();
-        });
+        await updateDoc(roomRef.current, { State: state });
+        setGameState(state)
     };
 
 
@@ -224,7 +256,7 @@ export const Room = () => {
                 const State = docSnap.data().State;
                 if (
                     State === GameState.WAIT_MORE_MEMBER ||
-                    State === GameState.WAIT_START
+                    State === GameState.WAIT_START||(roomId.current&&userId.current)
                 ) {
                     setGameState(State)
                     SetRoomID(rN);
@@ -352,7 +384,7 @@ export const Room = () => {
                                     SetGameState(GameState.WAIT_START);
                                 } else if (getGameState() === GameState.CHAT) {
                                     if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
-                                        SetGameState(GameState.CHECK_ANSWER, () => {
+                                        SetGameState(GameState.CHECK_ANSWER ).then(() => {
                                             let tmp_answerDatas = [];
                                             querySnapshot.forEach((doc) => {
                                                 if (getPainter() !== doc.id) {
@@ -370,7 +402,7 @@ export const Room = () => {
                                 }
                             } else if (getGameState() === GameState.CHAT) {
                                 if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
-                                    SetGameState(GameState.CHECK_ANSWER, () => {
+                                    SetGameState(GameState.CHECK_ANSWER ).then(() => {
                                         let tmp_answerDatas = [];
                                         querySnapshot.forEach((doc) => {
                                             if (getPainter() !== doc.id) {
@@ -414,8 +446,6 @@ export const Room = () => {
         deleteDoc(
             doc(allRoomRef, roomId.current + '/members/' + userId.current)
         ).finally(() => {
-            const Ref = ref(db, 'rooms/' + roomId.current + '/messages');
-            off(Ref);
             roomId.current = '';
             userId.current = '';
             setUserDictionary({});
@@ -430,6 +460,8 @@ export const Room = () => {
             setAnsLocked(false)
             setAnswer('');
             setSentAnswer(false);
+            const Ref = ref(db, 'rooms/' + roomId.current + '/messages');
+            off(Ref);
         });
     }, [sentAnswer, userDictionary, userName, messages, stateGameState, roomName, isJoined, ansLocked, answer]);
 
@@ -455,6 +487,14 @@ export const Room = () => {
             SetGameState(GameState.RESULT)
         })
     }
+    const StartNewGame=useCallback(()=>{
+        const uids= Object.keys(userDictionary).filter(uid=>uid!==getPainter())
+        updateDoc(roomRef.current,{
+            Painter:uids[Math.floor(Math.random() * uids.length)]
+        }).then(()=>{
+            SetGameState(GameState.WAIT_START);
+        })
+    },[userDictionary])
     return (
         <div>
             <View style={{ width: '50%', flex: 1, flexDirection: 'row' }}>
@@ -561,12 +601,16 @@ export const Room = () => {
                         <DrawZone
                             ref={drawZoneRef}
                             penRadius={5}
-                            odai={'くるま！！！！'}
+                            odai={odai}
                             onDrawEnd={(imageDataUrl) => {
 
                                 // Data URL string
-                                uploadString(storageReference, imageDataUrl, 'data_url').then(
+                                uploadString(storageRef(
+                                    storage,
+                                    roomId.current + '.jpg',{cacheControl:"no-cache"}
+                                ), imageDataUrl, 'data_url').then(
                                     (snapshot) => {
+
                                         SetGameState(GameState.CHAT);
                                     }
                                 );
@@ -587,7 +631,7 @@ export const Room = () => {
                                             <Button variant={"contained"}
                                                     disabled={GameState.WAIT_START !== stateGameState}
                                                     onClick={() => {
-                                                        SetGameState(GameState.DRAW, () => {
+                                                        SetGameState(GameState.DRAW).then(() => {
                                                             drawZoneRef.current.start();
                                                         })
                                                     }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
@@ -679,8 +723,11 @@ export const Room = () => {
                                     </TableBody>
                                 </Table>
                             </TableContainer>
-                            {!(sentAnswer && !isPainter) || isPainter ?
+                            {(!(sentAnswer && !isPainter) || isPainter)&&getGameState()===GameState.CHECK_ANSWER ?
                                 <Button variant={"contained"} onClick={SubmitResult}>結果を送信</Button> : <></>}
+                            {(getGameState()===GameState.RESULT&&isPainter) &&
+                                <Button variant={"contained"} onClick={StartNewGame}>次のゲーム</Button>
+                            }
                         </div>
                     </>
                 }
