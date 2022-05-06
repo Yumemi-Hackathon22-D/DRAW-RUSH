@@ -1,9 +1,8 @@
-import {forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState} from 'react';
-import {Button, Typography} from "@mui/material";
-import {PlayCircleOutline} from "@mui/icons-material";
-import {storage} from "../firebase";
-import { ref, uploadString } from "firebase/storage";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Typography, Button } from "@mui/material";
 import * as React from "react"
+import './../App.css';
+
 const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
 const DrawZone = forwardRef((props, drawZoneRef) => {
@@ -14,11 +13,15 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
     let canvasContext = useRef(null);
     useImperativeHandle(drawZoneRef, () => {
         return {
-            //ここに関数を定義すれば外部からもよびだせるよ～～～ん
+            //ここに関数を定義すれば外部からも呼び出せます。
             clearCanvas() {
                 clear();
+            },
+            start: () => {
+                setTime(3);
+                clear();
+                startTimer();
             }
-
         }
     })
 
@@ -41,7 +44,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
         return () => {
             observer.disconnect();
         };
-    }, [canvasRef]);
+    }, [/*canvasRef.current*/]);
     useEffect(() => {
 
         if (canvasRef.current) {
@@ -118,58 +121,54 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
 
     function clear() {
         canvasContext.current.fillStyle = "#FFFFFF";
-        canvasContext.current.fillRect(0,0,canvasRef.current.width, canvasRef.current.height);
+        canvasContext.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
     }
-    const [beforeStart,setBeforeStart]=useState(true);
-    const [time,setTime]=useState(3);
+
+    const [beforeStart, setBeforeStart] = useState(true);
+    const [time, setTime] = useState(3);
     const timeRef = useRef(time);
     timeRef.current = time;
-    const startTimer=useCallback(()=>{
+    const startTimer = useCallback(() => {
 
         setTime(3)
         setBeforeStart(false)
-       let timer= setInterval(()=>{
-            setTime(timeRef.current-0.1)
-            if (timeRef.current-0.1<= 0) {
+        let timer = setInterval(() => {
+            setTime(timeRef.current - 0.1)
+            if (timeRef.current - 0.1 <= 0) {
                 setBeforeStart(true);
-                const storageRef = ref(storage,'image.jpg');
-                const imageDataUrl=canvasRef.current?.toDataURL("image/jpeg",0);
+                const imageDataUrl = canvasRef.current?.toDataURL("image/jpeg", 0);
                 console.log(imageDataUrl);
-                // Data URL string
-                uploadString(storageRef, imageDataUrl, 'data_url').then((snapshot) => {
-                    console.log('Uploaded a data_url string!');
-                });
+                props.onDrawEnd(imageDataUrl);
                 clear();
                 clearInterval(timer);
             }
         }, 100);
-    },[time])
+    }, [time])
 
     return (
         <div>
-            <Typography variant={"h3"}>お題:{props.odai} <span className={"timer"}>{time.toFixed(1)}</span></Typography>
-            {beforeStart &&
-            <div className={"blocker"}>
+            <div>
+                <Typography variant={"h5"}>お題:{props.odai} <span className={"timer"}>{time.toFixed(1)}</span></Typography>
 
-                    <Typography variant={"h6"}>今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！</Typography>
+                {beforeStart &&
+                    <div className={"blocker"}>
 
-                <p>
-                    <Button variant={"contained"} onClick={startTimer}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                </p>
+                        {props.canvasOverRay()}
 
+                    </div>
+                }
+                <canvas
+                    className={'canvas board'}
+                    ref={canvasRef}
+                    onPointerDown={clickHandler}
+                    onPointerEnter={clickHandler}
+                    onPointerUp={pointerOutHandler}
+                    onPointerOut={pointerOutHandler}
+                    onPointerMove={pointerMoveHandler}
+                > </canvas>
             </div>
-            }
-            <canvas
-                className={'canvas'}
-                ref={canvasRef}
-                onPointerDown={clickHandler}
-                onPointerEnter={clickHandler}
-                onPointerUp={pointerOutHandler}
-                onPointerOut={pointerOutHandler}
-                onPointerMove={pointerMoveHandler}
-            ></canvas>
-            <button onClick={clear}>clear</button>
+            <Button variant='contained' onClick={clear}>Canvas clear</Button>
         </div>
     );
 });
