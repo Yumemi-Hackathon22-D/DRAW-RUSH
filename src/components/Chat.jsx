@@ -15,7 +15,7 @@ import {
     Table,
     TableHead, TableRow, TableCell, TableBody, Checkbox
 } from '@mui/material';
-import { Lock, LockOpen, PlayCircleOutline, Send } from '@mui/icons-material';
+import { Lock, LockOpen, PlayCircleOutline, Send,Link } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DrawZone from './DrawZone';
@@ -25,6 +25,7 @@ import Balloon from './Balloon';
 import ClearIcon from '@mui/icons-material/Clear'
 import { getRandomOdai } from '../odaiLoader'
 import './../test.css'
+import getParam from '../getParam'
 
 const GameState = {
     //enum風
@@ -57,6 +58,7 @@ export const Room = () => {
     const [userDictionary, setUserDictionary] = useState({});
     const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
+    const [isUrlCopied, setIsUrlCopied] = useState(false);
     const balloonRef = useRef();
     const [imgUrl, setImgUrl] = useState('');
     const [ansLocked, setAnsLocked] = useState(false);
@@ -83,6 +85,8 @@ export const Room = () => {
             roomId.current = cookie.roomId;
             userId.current = cookie.userId;
             Join();
+        } else {
+            setroomName(getParam("roomId")??"")
         }
     }, []);
     const Clean = () => {
@@ -211,6 +215,12 @@ url.createObjectURL(blob)
             setIsCopied(false);
         }, 1000);
     };
+    const CheckedUrl = async () => {
+        setIsUrlCopied(true);
+        setTimeout(() => {
+            setIsUrlCopied(false);
+        }, 1000);
+    };
     const GetUserNameById = (uid) => {
         return (userDictionary[uid] || 'Unknown太郎');
     }
@@ -230,7 +240,8 @@ url.createObjectURL(blob)
                         <div className="flr">
                             <p className="msg" id="msg-0">{i.msg}</p>
                         </div>
-                        <span className="timestamp"><span className="username">{GetUserNameById(i.userId)}</span>-<span className="posttime">{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
+                        <span className="timestamp"><span className="username">{GetUserNameById(i.userId)}</span>-<span
+                            className="posttime">{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
                     </div>
                 </article>
             );
@@ -330,7 +341,6 @@ url.createObjectURL(blob)
             }
             const roomDoc = doc(allRoomRef, id); //Not
             const q = collection(roomDoc, '/members/');
-
 
 
             firestoreListenersRef.current.push(
@@ -542,7 +552,22 @@ url.createObjectURL(blob)
                                             }}
                                         >
                                             {' '}
-                                            {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
+                                            {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
+                                        </IconButton>
+                                        <IconButton
+                                            aria-label='copyLink'
+                                            onClick={() => {
+                                                const shareUrl=window.location.origin+"?roomId="+roomId.current
+                                                navigator.clipboard.writeText(shareUrl);
+                                                CheckedUrl();
+                                            }}
+                                        >
+
+                                            {' '}
+                                            {!isUrlCopied ?
+                                                <Link/> :
+                                                <CheckIcon/>
+                                            }
                                         </IconButton>
                                     </span>
                                 </div>
@@ -569,7 +594,7 @@ url.createObjectURL(blob)
                             right: 0,
                             backgroundColor: "#2f323b",
                         }}>
-                            <ShowChat ></ShowChat>
+                            <ShowChat></ShowChat>
                             {/* <div> */}
                             <TextField
                                 label="お話しよう！"
