@@ -59,6 +59,7 @@ export const Room = () => {
     const firestoreListenersRef = useRef([]);
     const [isCopied, setIsCopied] = useState(false);
     const [isUrlCopied, setIsUrlCopied] = useState(false);
+    const [disableJoin, setDisableJoin] = useState(false);
     const balloonRef = useRef();
     const [imgUrl, setImgUrl] = useState('');
     const [ansLocked, setAnsLocked] = useState(false);
@@ -444,6 +445,8 @@ url.createObjectURL(blob)
             );
             JoinChat(id);
             setIsJoined(true);
+        }).finally(() => {
+            setDisableJoin(false);
         });
         const JoinChat = (id) => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
