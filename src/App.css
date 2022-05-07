@@ -110,6 +110,10 @@ animation: balloonMove 3s ease-in-out 0s infinite normal both;
 
 
 }
+.image{
+  width: 100%;
+  aspect-ratio: auto 16/9;
+}
 
 /* デフォルト：980px以上用（PC用）の記述 */
 @media screen and (max-width: 979px) {

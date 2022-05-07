@@ -229,7 +229,7 @@ url.createObjectURL(blob)
                         <div className="flr">
                             <p className="msg" id = "msg-0">{i.msg}</p>
                         </div>
-                        <span className="timestamp"><span className="username">{GetUserNameById(i.userId)}</span>-<span class="posttime">{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
+                        <span className="timestamp"><span className="username">{GetUserNameById(i.userId)}</span>-<span className="posttime">{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
                     </div>
                 </article>
             );
@@ -658,7 +658,7 @@ url.createObjectURL(blob)
                         {!isPainter ?
 
                             <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-                                <img src={imgUrl} alt={"書かれたもの"}/>
+                                <img className={"image"} src={imgUrl} alt={"書かれたもの"}/>
                                 <TextField
                                     value={answer}
                                     onChange={(e) => {
