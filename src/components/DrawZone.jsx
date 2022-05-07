@@ -3,6 +3,7 @@ import { Typography, Button } from "@mui/material";
 import * as React from "react"
 import './../App.css';
 
+const second=3
 const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
 const DrawZone = forwardRef((props, drawZoneRef) => {
@@ -18,7 +19,7 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
                 clear();
             },
             start: () => {
-                setTime(3);
+                setTime(second);
                 clear();
                 startTimer();
             }
@@ -126,12 +127,12 @@ const DrawZone = forwardRef((props, drawZoneRef) => {
     }
 
     const [beforeStart, setBeforeStart] = useState(true);
-    const [time, setTime] = useState(3);
+    const [time, setTime] = useState(second);
     const timeRef = useRef(time);
     timeRef.current = time;
     const startTimer = useCallback(() => {
 
-        setTime(3)
+        setTime(second)
         setBeforeStart(false)
         let timer = setInterval(() => {
             setTime(timeRef.current - 0.1)
