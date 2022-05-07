@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
 import { ref, push, set, serverTimestamp, onValue, off, onChildAdded } from 'firebase/database';
-import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc, getDocs,deleteField } from 'firebase/firestore';
+import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc, getDocs, deleteField } from 'firebase/firestore';
 import {
     TextField,
     Button,
@@ -63,7 +63,7 @@ export const Room = () => {
     const [sentAnswer, setSentAnswer] = useState(false);
     const [answer, setAnswer] = useState('');
     const [answerDatas, setAnswerDatas] = useState([]);
-    const [odai,setOdai]=useState('');
+    const [odai, setOdai] = useState('');
     const [isCompositionend, setIsCompositionend] = useState(false);
 
     const roomRef = useRef();
@@ -85,8 +85,8 @@ export const Room = () => {
             Join();
         }
     }, []);
-    const Clean=()=>{
-        balloonRef.current=undefined;
+    const Clean = () => {
+        balloonRef.current = undefined;
         setImgUrl("");
         setAnsLocked(false);
         setSentAnswer(false);
@@ -94,7 +94,7 @@ export const Room = () => {
         setAnswerDatas([]);
         setOdai('')
     }
-    
+
     //ゲームの進行状態を監視
     useEffect(() => {
         console.log(getGameState());
@@ -105,7 +105,7 @@ export const Room = () => {
             case GameState.WAIT_START: {
                 //キレイキレイ
                 Clean();
-                    setOdai(getRandomOdai())
+                setOdai(getRandomOdai())
 
                 break;
             }
@@ -155,10 +155,10 @@ url.createObjectURL(blob)
                                     userId: doc.id,
                                     isCorrect: data.isCorrect
                                 });
-                                updateDoc(doc.ref,{
-                                    answer:  deleteField(),
-                                    userId:  deleteField(),
-                                    isCorrect:  deleteField()
+                                updateDoc(doc.ref, {
+                                    answer: deleteField(),
+                                    userId: deleteField(),
+                                    isCorrect: deleteField()
                                 });
                             }
                         });
@@ -193,15 +193,16 @@ url.createObjectURL(blob)
         if (sendMessage.trim() === '') return
         if (sendMessage.match(jaRegexp) && !isCompositionend) {
             return
-          }
-         {
-        setIsCompositionend(false);
-        let messageRef = push(ref(db, 'rooms/' + roomId.current + '/messages/'), {
-            userId: userId.current,
-            msg: sendMessage,
-            timeStamp: serverTimestamp(),
-        });
-        setSendMessage('');}
+        }
+        {
+            setIsCompositionend(false);
+            let messageRef = push(ref(db, 'rooms/' + roomId.current + '/messages/'), {
+                userId: userId.current,
+                msg: sendMessage,
+                timeStamp: serverTimestamp(),
+            });
+            setSendMessage('');
+        }
     };
 
     const Checked = async () => {
@@ -216,7 +217,7 @@ url.createObjectURL(blob)
 
     const ShowChat = () => {
         let result = [];
-        useLayoutEffect(()=>{
+        useLayoutEffect(() => {
             if (chatscrollRef.current) chatscrollRef.current.scrollIntoView()
         })
         if (messages === '') return;
@@ -227,7 +228,7 @@ url.createObjectURL(blob)
                 <article className={articleClass}>
                     <div className="msg-box">
                         <div className="flr">
-                            <p className="msg" id = "msg-0">{i.msg}</p>
+                            <p className="msg" id="msg-0">{i.msg}</p>
                         </div>
                         <span className="timestamp"><span className="username">{GetUserNameById(i.userId)}</span>-<span className="posttime">{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
                     </div>
@@ -236,12 +237,12 @@ url.createObjectURL(blob)
         }
 
         return (
-                <section  className="chat-window" >{result}
-                    <div ref={chatscrollRef}></div>
-		</section>
-            
+            <section className="chat-window" >{result}
+                <div ref={chatscrollRef}></div>
+            </section>
+
         )
-        
+
     };
     const SetGameState = async (state) => {
         console.log(state);
@@ -252,7 +253,7 @@ url.createObjectURL(blob)
 
 
     const Join = useCallback(() => {
-        
+
         let createSelf = false;
         if (
             (userName === '' || roomName === '') &&
@@ -278,7 +279,7 @@ url.createObjectURL(blob)
                 const State = docSnap.data().State;
                 if (
                     State === GameState.WAIT_MORE_MEMBER ||
-                    State === GameState.WAIT_START||(roomId.current&&userId.current)
+                    State === GameState.WAIT_START || (roomId.current && userId.current)
                 ) {
                     setGameState(State)
                     SetRoomID(rN);
@@ -320,7 +321,7 @@ url.createObjectURL(blob)
             }
             await SetRoom(id);
             return id;
-        };       
+        };
 
         JoinRoom().then((id) => {
             if (id === '') {
@@ -330,7 +331,7 @@ url.createObjectURL(blob)
             const roomDoc = doc(allRoomRef, id); //Not
             const q = collection(roomDoc, '/members/');
 
-            
+
 
             firestoreListenersRef.current.push(
                 onSnapshot(roomDoc, {
@@ -389,7 +390,7 @@ url.createObjectURL(blob)
                                     SetGameState(GameState.WAIT_START);
                                 } else if (getGameState() === GameState.CHAT) {
                                     if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
-                                        SetGameState(GameState.CHECK_ANSWER ).then(() => {
+                                        SetGameState(GameState.CHECK_ANSWER).then(() => {
                                             let tmp_answerDatas = [];
                                             querySnapshot.forEach((doc) => {
                                                 if (getPainter() !== doc.id) {
@@ -407,7 +408,7 @@ url.createObjectURL(blob)
                                 }
                             } else if (getGameState() === GameState.CHAT) {
                                 if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
-                                    SetGameState(GameState.CHECK_ANSWER ).then(() => {
+                                    SetGameState(GameState.CHECK_ANSWER).then(() => {
                                         let tmp_answerDatas = [];
                                         querySnapshot.forEach((doc) => {
                                             if (getPainter() !== doc.id) {
@@ -493,14 +494,14 @@ url.createObjectURL(blob)
             SetGameState(GameState.RESULT)
         })
     }
-    const StartNewGame=useCallback(()=>{
-        const uids= Object.keys(userDictionary).filter(uid=>uid!==getPainter())
-        updateDoc(roomRef.current,{
-            Painter:uids[Math.floor(Math.random() * uids.length)]
-        }).then(()=>{
+    const StartNewGame = useCallback(() => {
+        const uids = Object.keys(userDictionary).filter(uid => uid !== getPainter())
+        updateDoc(roomRef.current, {
+            Painter: uids[Math.floor(Math.random() * uids.length)]
+        }).then(() => {
             SetGameState(GameState.WAIT_START);
         })
-    },[userDictionary])
+    }, [userDictionary])
     return (
         <div>
             <View style={{ width: '50%', flex: 1, flexDirection: 'row' }}>
@@ -541,7 +542,7 @@ url.createObjectURL(blob)
                                             }}
                                         >
                                             {' '}
-                                            {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
+                                            {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
                                         </IconButton>
                                     </span>
                                 </div>
@@ -568,36 +569,37 @@ url.createObjectURL(blob)
                             right: 0,
                             backgroundColor: "#2f323b",
                         }}>
-                                <ShowChat ></ShowChat>
+                            <ShowChat ></ShowChat>
                             {/* <div> */}
-                                <TextField
-                                    label="お話しよう！"
-                                    style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0, backgroundColor: 'white'}}
-                                    value={sendMessage}
-                                    onKeyDown={(e) => {
-                                        if(e.key === 'Enter') handleSubmitKey(e) }}
-                                    onChange={(e) => {
-                                        setSendMessage(e.target.value);
-                                    }}
-                                    onCompositionEnd={() => {
-                                        setIsCompositionend(true)
-                                      }}
-                                    variant='filled'
-                                    InputProps={{
-                                        endAdornment: (
-                                            <InputAdornment position='end'>
-                                                <IconButton
-                                                    onClick={handleSubmit}
-                                                    edge='end'
-                                                    color='primary'
-                                                    disabled={sendMessage.trim() === ''}
-                                                >
-                                                    {<Send/>}
-                                                </IconButton>
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                ></TextField>
+                            <TextField
+                                label="お話しよう！"
+                                style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0, backgroundColor: 'white' }}
+                                value={sendMessage}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSubmitKey(e)
+                                }}
+                                onChange={(e) => {
+                                    setSendMessage(e.target.value);
+                                }}
+                                onCompositionEnd={() => {
+                                    setIsCompositionend(true)
+                                }}
+                                variant='filled'
+                                InputProps={{
+                                    endAdornment: (
+                                        <InputAdornment position='end'>
+                                            <IconButton
+                                                onClick={handleSubmit}
+                                                edge='end'
+                                                color='primary'
+                                                disabled={sendMessage.trim() === ''}
+                                            >
+                                                {<Send />}
+                                            </IconButton>
+                                        </InputAdornment>
+                                    ),
+                                }}
+                            ></TextField>
                             {/* </div> */}
 
                         </View>
@@ -618,7 +620,7 @@ url.createObjectURL(blob)
                                 // Data URL string
                                 uploadString(storageRef(
                                     storage,
-                                    roomId.current + '.jpg',{cacheControl:"no-cache"}
+                                    roomId.current + '.jpg', { cacheControl: "no-cache" }
                                 ), imageDataUrl, 'data_url').then(
                                     (snapshot) => {
 
@@ -628,25 +630,25 @@ url.createObjectURL(blob)
                             }}
                             canvasOverRay={() => {
                                 return (<>
-                                        <Typography
+                                    <Typography
 
-                                            variant={"h6"}>
-                                            <Balloon ref={balloonRef}></Balloon>
-                                            {GameState.WAIT_START !== stateGameState ?
-                                                "メンバーが集まるまでお待ちください" :
-                                                "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
-                                            }
+                                        variant={"h6"}>
+                                        <Balloon ref={balloonRef}></Balloon>
+                                        {GameState.WAIT_START !== stateGameState ?
+                                            "メンバーが集まるまでお待ちください" :
+                                            "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                        }
 
-                                        </Typography>
-                                        <p>
-                                            <Button variant={"contained"}
-                                                    disabled={GameState.WAIT_START !== stateGameState}
-                                                    onClick={() => {
-                                                        SetGameState(GameState.DRAW).then(() => {
-                                                            drawZoneRef.current.start();
-                                                        })
-                                                    }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                                        </p></>
+                                    </Typography>
+                                    <p>
+                                        <Button variant={"contained"}
+                                            disabled={GameState.WAIT_START !== stateGameState}
+                                            onClick={() => {
+                                                SetGameState(GameState.DRAW).then(() => {
+                                                    drawZoneRef.current.start();
+                                                })
+                                            }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                    </p></>
                                 )
                             }}
                         />
@@ -658,7 +660,7 @@ url.createObjectURL(blob)
                         {!isPainter ?
 
                             <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-                                <img className={"image"} src={imgUrl} alt={"書かれたもの"}/>
+                                <img className={"image"} src={imgUrl} alt={"書かれたもの"} />
                                 <TextField
                                     value={answer}
                                     onChange={(e) => {
@@ -677,7 +679,7 @@ url.createObjectURL(blob)
                                                     color='primary'
                                                     disabled={answer === '' || ansLocked}
                                                 >
-                                                    {ansLocked ? <Lock/> : <LockOpen/>}
+                                                    {ansLocked ? <Lock /> : <LockOpen />}
                                                 </IconButton>
                                             </InputAdornment>
 
@@ -687,7 +689,7 @@ url.createObjectURL(blob)
                             </View> : <></>}
                     </>
                 }
-                {(getGameState() === GameState.CHECK_ANSWER||getGameState()===GameState.RESULT) && answerDatas.length !== 0 &&
+                {(getGameState() === GameState.CHECK_ANSWER || getGameState() === GameState.RESULT) && answerDatas.length !== 0 &&
                     <>
                         <div>
                             <TableContainer component={Paper}>
@@ -696,13 +698,14 @@ url.createObjectURL(blob)
                                         <TableRow>
                                             <TableCell>名前</TableCell>
                                             <TableCell>回答</TableCell>
-                                            {(isPainter||getGameState()===GameState.RESULT) ? <TableCell>正誤(正しければ<Checkbox checked={true}/>)</TableCell> : <></>}
+                                            {(isPainter || getGameState() === GameState.RESULT) ? <TableCell>正誤(正しければ<Checkbox checked={true} />)</TableCell> : <></>}
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
                                         {answerDatas.map((ans, index) => (
 
                                             <TableRow
+                                                style={{ backgroundColor: (ans.userId === userId.current ? getGameState() === GameState.RESULT ? ans.isCorrect ? '#90ee90' : '#ffa07a' : '#add8e6' : '') }}
                                                 key={ans.userId}
                                                 sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
                                             >
@@ -712,10 +715,10 @@ url.createObjectURL(blob)
                                                 <TableCell>
                                                     {ans.answer}
                                                 </TableCell>
-                                                {(isPainter||getGameState()===GameState.RESULT) ? <TableCell>
+                                                {(isPainter || getGameState() === GameState.RESULT) ? <TableCell>
                                                     <Checkbox
                                                         checked={ans.isCorrect}
-                                                        disabled={getGameState()===GameState.RESULT}
+                                                        disabled={getGameState() === GameState.RESULT}
                                                         onChange={(event) => {
                                                             setAnswerDatas((prevState) =>
                                                                 prevState.map((preAns, i) => (i === index ? {
@@ -725,8 +728,8 @@ url.createObjectURL(blob)
                                                             )
                                                         }}
                                                         inputProps={{ 'aria-label': 'controlled' }}
-                                                    ><IconButton>{ans.isCorrect ? <CheckIcon/> :
-                                                        <ClearIcon/>}</IconButton></Checkbox>
+                                                    ><IconButton>{ans.isCorrect ? <CheckIcon /> :
+                                                        <ClearIcon />}</IconButton></Checkbox>
                                                 </TableCell> : <></>}
                                             </TableRow>
                                         ))
@@ -734,9 +737,9 @@ url.createObjectURL(blob)
                                     </TableBody>
                                 </Table>
                             </TableContainer>
-                            {(!(sentAnswer && !isPainter) || isPainter)&&getGameState()===GameState.CHECK_ANSWER ?
+                            {(!(sentAnswer && !isPainter) || isPainter) && getGameState() === GameState.CHECK_ANSWER ?
                                 <Button variant={"contained"} onClick={SubmitResult}>結果を送信</Button> : <></>}
-                            {(getGameState()===GameState.RESULT&&isPainter) &&
+                            {(getGameState() === GameState.RESULT && isPainter) &&
                                 <Button variant={"contained"} onClick={StartNewGame}>次のゲーム</Button>
                             }
                         </div>
