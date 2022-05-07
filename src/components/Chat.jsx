@@ -15,7 +15,7 @@ import {
     Table,
     TableHead, TableRow, TableCell, TableBody, Checkbox
 } from '@mui/material';
-import { Lock, LockOpen, PlayCircleOutline, Send,Link } from '@mui/icons-material';
+import { Lock, LockOpen, PlayCircleOutline, Send, Link } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DrawZone from './DrawZone';
@@ -67,6 +67,7 @@ export const Room = () => {
     const [answerDatas, setAnswerDatas] = useState([]);
     const [odai, setOdai] = useState('');
     const [isCompositionend, setIsCompositionend] = useState(false);
+    const [isJoinPressed, setIsJoinPressed] = useState(false);
 
     const roomRef = useRef();
     const isPainter =
@@ -86,7 +87,7 @@ export const Room = () => {
             userId.current = cookie.userId;
             Join();
         } else {
-            setroomName(getParam("roomId")??"")
+            setroomName(getParam("roomId") ?? "")
         }
     }, []);
     const Clean = () => {
@@ -264,7 +265,7 @@ url.createObjectURL(blob)
 
 
     const Join = useCallback(() => {
-
+        setIsJoinPressed(true)
         let createSelf = false;
         if (
             (userName === '' || roomName === '') &&
@@ -272,6 +273,7 @@ url.createObjectURL(blob)
             !cookie.roomId
         ) {
             alert('ルーム名かユーザー名を入力してください');
+            setIsJoinPressed(false);
             return;
         }
         const CheckRoom = async () => {
@@ -331,6 +333,7 @@ url.createObjectURL(blob)
                 return '';
             }
             await SetRoom(id);
+            setIsJoinPressed(false);
             return id;
         };
 
@@ -552,12 +555,12 @@ url.createObjectURL(blob)
                                             }}
                                         >
                                             {' '}
-                                            {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
+                                            {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
                                         </IconButton>
                                         <IconButton
                                             aria-label='copyLink'
                                             onClick={() => {
-                                                const shareUrl=window.location.origin+"?roomId="+roomId.current
+                                                const shareUrl = window.location.origin + "?roomId=" + roomId.current
                                                 navigator.clipboard.writeText(shareUrl);
                                                 CheckedUrl();
                                             }}
@@ -565,15 +568,15 @@ url.createObjectURL(blob)
 
                                             {' '}
                                             {!isUrlCopied ?
-                                                <Link/> :
-                                                <CheckIcon/>
+                                                <Link /> :
+                                                <CheckIcon />
                                             }
                                         </IconButton>
                                     </span>
                                 </div>
                             </div>
                         ) : (
-                            <Button variant='contained' onClick={Join}>
+                            <Button variant='contained' onClick={Join} disabled={isJoinPressed}>
                                 Join
                             </Button>
                         )}
