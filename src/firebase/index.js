@@ -21,7 +21,9 @@ const firebaseConfig = {
   messagingSenderId: '941454002806',
   appId: '1:941454002806:web:89bae0d8f1eb7b7fb76d57',
 };
-
+if (process.env.NODE_ENV === "development"){
+  window.FIREBASE_APPCHECK_DEBUG_TOKEN=process.env.REACT_APP_FIREBASE_APPCHECK_DEBUG_TOKEN
+}
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const appCheck = initializeAppCheck(app, {
