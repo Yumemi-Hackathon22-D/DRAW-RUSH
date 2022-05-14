@@ -3,7 +3,17 @@ import { View } from 'react-native';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
 import { ref, push, set, serverTimestamp, onValue, off, onChildAdded } from 'firebase/database';
-import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc, getDocs, deleteField } from 'firebase/firestore';
+import {
+    collection,
+    doc,
+    addDoc,
+    getDoc,
+    onSnapshot,
+    updateDoc,
+    deleteDoc,
+    getDocs,
+    deleteField
+} from 'firebase/firestore';
 import {
     TextField,
     Button,
@@ -26,7 +36,7 @@ import ClearIcon from '@mui/icons-material/Clear'
 import { getRandomOdai } from '../odaiLoader'
 import './../test.css'
 import getParam from '../getParam'
-
+import useSound, { Sounds } from '../useSound'
 const GameState = {
     //enum風
     WAIT_MORE_MEMBER: 'waitMember', //独りぼっち　さみしい
@@ -41,6 +51,7 @@ const GameState = {
 };
 
 export const Room = () => {
+    const [audioPlay,audioLoad] = useSound(Sounds.NotificationSimple)
     const chatscrollRef = useRef('');
     const allRoomRef = collection(firestore, 'rooms');
     //呼び出せる関数はDrawZone.jsxのL14らへんに定義してあります。
@@ -68,7 +79,6 @@ export const Room = () => {
     const [odai, setOdai] = useState('');
     const [isCompositionend, setIsCompositionend] = useState(false);
     const [isJoinPressed, setIsJoinPressed] = useState(false);
-
     const roomRef = useRef();
     const isPainter =
         getPainter() === userId.current && getPainter() !== '';
@@ -108,6 +118,7 @@ export const Room = () => {
                 break;
             }
             case GameState.WAIT_START: {
+                audioPlay(Sounds.NotificationSimple);
                 //キレイキレイ
                 Clean();
                 setOdai(getRandomOdai())
@@ -118,10 +129,7 @@ export const Room = () => {
                 break;
             }
             case GameState.CHAT: {
-                /*getBlob().then((blob) => {
-                    const url = window.URL || window.webkitURL
-url.createObjectURL(blob)
-                });*/
+                audioPlay(Sounds.Notification1);
                 getDownloadURL(storageRef(
                     storage,
                     roomId.current + '.jpg'
@@ -143,12 +151,14 @@ url.createObjectURL(blob)
                 break;
             }
             case GameState.CHECK_ANSWER: {
+                audioPlay(Sounds.Notification1);
                 break;
             }
             case GameState.RESULT: {
                 if (isPainter) {
 
                 } else {
+                    audioPlay(Sounds.Notification1);
                     //正解データを同期
                     getDocs(collection(roomRef.current, "members")).then((querySnapshot) => {
                         let tmp_answerDatas = [];
@@ -249,7 +259,7 @@ url.createObjectURL(blob)
         }
 
         return (
-            <section className="chat-window" >{result}
+            <section className="chat-window">{result}
                 <div ref={chatscrollRef}></div>
             </section>
 
@@ -557,7 +567,7 @@ url.createObjectURL(blob)
                                             }}
                                         >
                                             {' '}
-                                            {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
+                                            {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
                                         </IconButton>
                                         <IconButton
                                             aria-label='copyLink'
@@ -570,8 +580,8 @@ url.createObjectURL(blob)
 
                                             {' '}
                                             {!isUrlCopied ?
-                                                <Link /> :
-                                                <CheckIcon />
+                                                <Link/> :
+                                                <CheckIcon/>
                                             }
                                         </IconButton>
                                     </span>
@@ -603,7 +613,13 @@ url.createObjectURL(blob)
                             {/* <div> */}
                             <TextField
                                 label="お話しよう！"
-                                style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0, backgroundColor: 'white' }}
+                                style={{
+                                    display: 'flex',
+                                    width: '35%',
+                                    position: 'fixed',
+                                    bottom: 0,
+                                    backgroundColor: 'white'
+                                }}
                                 value={sendMessage}
                                 onKeyDown={(e) => {
                                     if (e.key === 'Enter') handleSubmitKey(e)
@@ -624,7 +640,7 @@ url.createObjectURL(blob)
                                                 color='primary'
                                                 disabled={sendMessage.trim() === ''}
                                             >
-                                                {<Send />}
+                                                {<Send/>}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -660,25 +676,25 @@ url.createObjectURL(blob)
                             }}
                             canvasOverRay={() => {
                                 return (<>
-                                    <Typography
+                                        <Typography
 
-                                        variant={"h6"}>
-                                        <Balloon ref={balloonRef}></Balloon>
-                                        {GameState.WAIT_START !== stateGameState ?
-                                            "メンバーが集まるまでお待ちください" :
-                                            "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
-                                        }
+                                            variant={"h6"}>
+                                            <Balloon ref={balloonRef}></Balloon>
+                                            {GameState.WAIT_START !== stateGameState ?
+                                                "メンバーが集まるまでお待ちください" :
+                                                "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                            }
 
-                                    </Typography>
-                                    <p>
-                                        <Button variant={"contained"}
-                                            disabled={GameState.WAIT_START !== stateGameState}
-                                            onClick={() => {
-                                                SetGameState(GameState.DRAW).then(() => {
-                                                    drawZoneRef.current.start();
-                                                })
-                                            }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                                    </p></>
+                                        </Typography>
+                                        <p>
+                                            <Button variant={"contained"}
+                                                    disabled={GameState.WAIT_START !== stateGameState}
+                                                    onClick={() => {
+                                                        SetGameState(GameState.DRAW).then(() => {
+                                                            drawZoneRef.current.start();
+                                                        })
+                                                    }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                        </p></>
                                 )
                             }}
                         />
@@ -690,7 +706,7 @@ url.createObjectURL(blob)
                         {!isPainter ?
 
                             <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-                                <img className={"image"} src={imgUrl} alt={"書かれたもの"} />
+                                <img className={"image"} src={imgUrl} alt={"書かれたもの"}/>
                                 <TextField
                                     value={answer}
                                     onChange={(e) => {
@@ -709,7 +725,7 @@ url.createObjectURL(blob)
                                                     color='primary'
                                                     disabled={answer === '' || ansLocked}
                                                 >
-                                                    {ansLocked ? <Lock /> : <LockOpen />}
+                                                    {ansLocked ? <Lock/> : <LockOpen/>}
                                                 </IconButton>
                                             </InputAdornment>
 
@@ -728,7 +744,8 @@ url.createObjectURL(blob)
                                         <TableRow>
                                             <TableCell>名前</TableCell>
                                             <TableCell>回答</TableCell>
-                                            {(isPainter || getGameState() === GameState.RESULT) ? <TableCell>正誤(正しければ<Checkbox checked={true} />)</TableCell> : <></>}
+                                            {(isPainter || getGameState() === GameState.RESULT) ?
+                                                <TableCell>正誤(正しければ<Checkbox checked={true}/>)</TableCell> : <></>}
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -758,8 +775,8 @@ url.createObjectURL(blob)
                                                             )
                                                         }}
                                                         inputProps={{ 'aria-label': 'controlled' }}
-                                                    ><IconButton>{ans.isCorrect ? <CheckIcon /> :
-                                                        <ClearIcon />}</IconButton></Checkbox>
+                                                    ><IconButton>{ans.isCorrect ? <CheckIcon/> :
+                                                        <ClearIcon/>}</IconButton></Checkbox>
                                                 </TableCell> : <></>}
                                             </TableRow>
                                         ))
