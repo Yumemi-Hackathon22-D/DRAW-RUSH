@@ -6,8 +6,10 @@ import './../App.css';
 const second=3
 const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
-const DrawZone = forwardRef((props, drawZoneRef) => {
-    const canvasRef = React.useRef();
+const DrawZone = forwardRef((props:{
+    odai: string; penRadius: number, onDrawEnd: (string) => void
+}, drawZoneRef) => {
+    const canvasRef = React.useRef<HTMLCanvasElement>();
     const [click, setClick] = React.useState(false);
     const [lastX, setLastX] = React.useState(0);
     const [lastY, setLastY] = React.useState(0);

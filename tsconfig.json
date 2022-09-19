@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "lib": ["dom", "ES2017"],
+    "allowJs": true,
+    "jsx": "react",
+    "declaration": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "tests"]
+}

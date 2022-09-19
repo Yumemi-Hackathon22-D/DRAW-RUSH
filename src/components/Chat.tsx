@@ -46,7 +46,7 @@ export const Room = () => {
     //呼び出せる関数はDrawZone.jsxのL14らへんに定義してあります。
     const drawZoneRef = useRef();
     const [getGameState, setGameState, stateGameState] = useCacheState('');
-    const [getPainter, setPainter, statePainter] = useCacheState('');
+    const [getPainter, setPainter] = useCacheState('');
     const [isJoined, setIsJoined] = useState(false);
     const [roomName, setroomName] = useState('');
     const roomId = useRef('');

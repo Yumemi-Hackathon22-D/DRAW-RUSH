@@ -1,9 +1,9 @@
 import { useState } from 'react'
 
-export default function useCacheState(initialValue) {
+export default function useCacheState<T>(initialValue:T):[()=>T,(value:T)=>void,T] {
     const [state, setState] = useState(initialValue);
     let tmp = state;
-    const Setter=(value)=>{
+    const Setter=(value:T)=>{
         tmp=value;
         setState(value);
     }
