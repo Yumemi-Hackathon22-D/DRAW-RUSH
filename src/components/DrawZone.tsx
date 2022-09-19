@@ -2,11 +2,12 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { Typography, Button } from "@mui/material";
 import * as React from "react"
 import './../App.css';
-
+export type DrawZoneRef={clearCanvas(): void, start: () => void}
 const second=3
 const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
 const DrawZone = forwardRef((props:{
+    canvasOverRay(): React.ReactNode;
     odai: string; penRadius: number, onDrawEnd: (string) => void
 }, drawZoneRef) => {
     const canvasRef = React.useRef<HTMLCanvasElement>();

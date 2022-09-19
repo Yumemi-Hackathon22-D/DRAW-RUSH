@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, } from 'react';
-import { View } from 'react-native';
 import { useCookies } from 'react-cookie';
 import { firestore, db, storage } from '../firebase/index';
 import { ref, push, set, serverTimestamp, onValue, off, onChildAdded } from 'firebase/database';
@@ -18,7 +17,7 @@ import {
 import { Lock, LockOpen, PlayCircleOutline, Send, Link } from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
-import DrawZone from './DrawZone';
+import DrawZone, {DrawZoneRef} from './DrawZone';
 import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 import useCacheState from '../CacheState'
 import Balloon from './Balloon';
@@ -26,7 +25,7 @@ import ClearIcon from '@mui/icons-material/Clear'
 import { getRandomOdai } from '../odaiLoader'
 import './../test.css'
 import getParam from '../getParam'
-
+import {DocumentReference} from "@firebase/firestore"
 const GameState = {
     //enum風
     WAIT_MORE_MEMBER: 'waitMember', //独りぼっち　さみしい
@@ -41,10 +40,10 @@ const GameState = {
 };
 
 export const Room = () => {
-    const chatscrollRef = useRef('');
+    const chatscrollRef = useRef<HTMLDivElement>();
     const allRoomRef = collection(firestore, 'rooms');
     //呼び出せる関数はDrawZone.jsxのL14らへんに定義してあります。
-    const drawZoneRef = useRef();
+    const drawZoneRef = useRef<DrawZoneRef>();
     const [getGameState, setGameState, stateGameState] = useCacheState('');
     const [getPainter, setPainter] = useCacheState('');
     const [isJoined, setIsJoined] = useState(false);
@@ -64,12 +63,16 @@ export const Room = () => {
     const [ansLocked, setAnsLocked] = useState(false);
     const [sentAnswer, setSentAnswer] = useState(false);
     const [answer, setAnswer] = useState('');
-    const [answerDatas, setAnswerDatas] = useState([]);
+    const [answerDatas, setAnswerDatas] = useState<{
+        answer: string,
+        userId: string,
+        isCorrect: boolean
+    }[]>([]);
     const [odai, setOdai] = useState('');
     const [isCompositionend, setIsCompositionend] = useState(false);
     const [isJoinPressed, setIsJoinPressed] = useState(false);
 
-    const roomRef = useRef();
+    const roomRef = useRef<DocumentReference>();
     const isPainter =
         getPainter() === userId.current && getPainter() !== '';
     const SetRoomID = (value) => {
@@ -150,7 +153,7 @@ url.createObjectURL(blob)
 
                 } else {
                     //正解データを同期
-                    getDocs(collection(roomRef.current, "members")).then((querySnapshot) => {
+                    getDocs(collection(roomRef.current!, "members")).then((querySnapshot) => {
                         let tmp_answerDatas = [];
                         querySnapshot.forEach((doc) => {
                             if (getPainter() !== doc.id) {
@@ -233,16 +236,17 @@ url.createObjectURL(blob)
         })
         if (messages === '') return;
         for (let [key, i] of Object.entries(messages)) {
-            let articleClass = i.userId === userId.current ? "msg-self" : "msg-remote"
+            const info=i as unknown as{userId:string,msg:string,timeStamp:number}
+            let articleClass = info.userId === userId.current ? "msg-self" : "msg-remote"
             articleClass += " msg-container"
             result.push(
                 <article className={articleClass}>
                     <div className="msg-box">
                         <div className="flr">
-                            <p className="msg" id="msg-0">{i.msg}</p>
+                            <p className="msg" id="msg-0">{info.msg}</p>
                         </div>
-                        <span className="timestamp"><span className="username">{GetUserNameById(i.userId)}</span>-<span
-                            className="posttime">{new Date(i.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
+                        <span className="timestamp"><span className="username">{GetUserNameById(info.userId)}</span>-<span
+                            className="posttime">{new Date(info.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
                     </div>
                 </article>
             );
@@ -313,7 +317,7 @@ url.createObjectURL(blob)
         };
         const SetRoom = async (roomId) => {
             console.log(roomId);
-            roomRef.current = await doc(allRoomRef, roomId);
+            roomRef.current = doc(allRoomRef, roomId);
             if (cookie.roomId === undefined || cookie.roomId === '' || cookie.userId === undefined || cookie.userId === "" || !Object.keys(cookie).length) {
                 const userRef = await addDoc(collection(roomRef.current, '/members/'), {
                     name: userName,
@@ -519,7 +523,7 @@ url.createObjectURL(blob)
     }, [userDictionary])
     return (
         <div>
-            <View style={{ width: '50%', flex: 1, flexDirection: 'row' }}>
+            <div style={{ width: '50%', flex: 1, flexDirection: 'row' }}>
                 <div>
 
                     <div>
@@ -590,7 +594,7 @@ url.createObjectURL(blob)
                 </div>
                 {isJoined ? (
                     <>
-                        <View style={{
+                        <div style={{
                             width: '35%',
                             height: '100%',
                             flex: 1,
@@ -632,12 +636,12 @@ url.createObjectURL(blob)
                             ></TextField>
                             {/* </div> */}
 
-                        </View>
+                        </div>
                     </>
                 ) : (
                     <></>
-                )}</View>
-            <View style={{ width: '65%' }}>
+                )}</div>
+            <div style={{ width: '65%' }}>
                 {isPainter && (
                     <>
                         <h3>メンバー数:{Object.keys(userDictionary).length}</h3>
@@ -650,8 +654,8 @@ url.createObjectURL(blob)
                                 // Data URL string
                                 uploadString(storageRef(
                                     storage,
-                                    roomId.current + '.jpg', { cacheControl: "no-cache" }
-                                ), imageDataUrl, 'data_url').then(
+                                    roomId.current + '.jpg',
+                                ), imageDataUrl, 'data_url',{ cacheControl: "no-cache" }).then(
                                     (snapshot) => {
 
                                         SetGameState(GameState.CHAT);
@@ -689,7 +693,7 @@ url.createObjectURL(blob)
 
                         {!isPainter ?
 
-                            <View style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
+                            <div style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
                                 <img className={"image"} src={imgUrl} alt={"書かれたもの"} />
                                 <TextField
                                     value={answer}
@@ -716,7 +720,7 @@ url.createObjectURL(blob)
                                         ),
                                     }}
                                 ></TextField>
-                            </View> : <></>}
+                            </div> : <></>}
                     </>
                 }
                 {(getGameState() === GameState.CHECK_ANSWER || getGameState() === GameState.RESULT) && answerDatas.length !== 0 &&
@@ -732,7 +736,7 @@ url.createObjectURL(blob)
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {answerDatas.map((ans, index) => (
+                                        {answerDatas.map((ans , index) => (
 
                                             <TableRow
                                                 style={{ backgroundColor: (ans.userId === userId.current ? getGameState() === GameState.RESULT ? ans.isCorrect ? '#90ee90' : '#ffa07a' : '#add8e6' : '') }}
@@ -749,7 +753,7 @@ url.createObjectURL(blob)
                                                     <Checkbox
                                                         checked={ans.isCorrect}
                                                         disabled={getGameState() === GameState.RESULT}
-                                                        onChange={(event) => {
+                                                        onChange={(event,checked) => {
                                                             setAnswerDatas((prevState) =>
                                                                 prevState.map((preAns, i) => (i === index ? {
                                                                     ...preAns,
@@ -758,8 +762,10 @@ url.createObjectURL(blob)
                                                             )
                                                         }}
                                                         inputProps={{ 'aria-label': 'controlled' }}
-                                                    ><IconButton>{ans.isCorrect ? <CheckIcon /> :
-                                                        <ClearIcon />}</IconButton></Checkbox>
+                                                        icon={<IconButton>{ans.isCorrect ? <CheckIcon /> :
+                                                            <ClearIcon />}</IconButton>}
+
+                                                    ></Checkbox>
                                                 </TableCell> : <></>}
                                             </TableRow>
                                         ))
@@ -775,7 +781,7 @@ url.createObjectURL(blob)
                         </div>
                     </>
                 }
-            </View>
+            </div>
         </div>
     );
 };
