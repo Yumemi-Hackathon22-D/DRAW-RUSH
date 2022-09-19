@@ -1,8 +1,18 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, } from 'react';
-import { useCookies } from 'react-cookie';
-import { firestore, db, storage } from '../firebase/index';
-import { ref, push, set, serverTimestamp, onValue, off, onChildAdded } from 'firebase/database';
-import { collection, doc, addDoc, getDoc, onSnapshot, updateDoc, deleteDoc, getDocs, deleteField } from 'firebase/firestore';
+import React, {useCallback, useEffect, useLayoutEffect, useRef, useState,} from 'react';
+import {useCookies} from 'react-cookie';
+import {firestore, db, storage} from '../firebase';
+import {ref, push, set, serverTimestamp, onValue, off, onChildAdded} from 'firebase/database';
+import {
+    collection,
+    doc,
+    addDoc,
+    getDoc,
+    onSnapshot,
+    updateDoc,
+    deleteDoc,
+    getDocs,
+    deleteField
+} from 'firebase/firestore';
 import {
     TextField,
     Button,
@@ -14,18 +24,20 @@ import {
     Table,
     TableHead, TableRow, TableCell, TableBody, Checkbox
 } from '@mui/material';
-import { Lock, LockOpen, PlayCircleOutline, Send, Link } from '@mui/icons-material';
+import {Lock, LockOpen, PlayCircleOutline, Send, Link} from '@mui/icons-material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import DrawZone, {DrawZoneRef} from './DrawZone';
-import { ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
+import {ref as storageRef, uploadString, getDownloadURL} from 'firebase/storage';
 import useCacheState from '../CacheState'
-import Balloon from './Balloon';
 import ClearIcon from '@mui/icons-material/Clear'
-import { getRandomOdai } from '../odaiLoader'
+import {getRandomOdai} from '../odaiLoader'
 import './../test.css'
 import getParam from '../getParam'
 import {DocumentReference} from "@firebase/firestore"
+import firebase from "firebase/compat";
+import Unsubscribe = firebase.Unsubscribe;
+
 const GameState = {
     //enum風
     WAIT_MORE_MEMBER: 'waitMember', //独りぼっち　さみしい
@@ -40,7 +52,7 @@ const GameState = {
 };
 
 export const Room = () => {
-    const chatscrollRef = useRef<HTMLDivElement>();
+    const chatscrollRef = useRef<HTMLDivElement>(null);
     const allRoomRef = collection(firestore, 'rooms');
     //呼び出せる関数はDrawZone.jsxのL14らへんに定義してあります。
     const drawZoneRef = useRef<DrawZoneRef>();
@@ -54,20 +66,20 @@ export const Room = () => {
     const [sendMessage, setSendMessage] = useState('');
     const [userName, setUserName] = useState('');
     const [cookie, setCookie, removeCookie] = useCookies();
-    const [userDictionary, setUserDictionary] = useState({});
-    const firestoreListenersRef = useRef([]);
+    const [userDictionary, setUserDictionary] = useState<Map<string,string>>(new Map());
+    const firestoreListenersRef = useRef< Unsubscribe[]>([]);
     const [isCopied, setIsCopied] = useState(false);
     const [isUrlCopied, setIsUrlCopied] = useState(false);
-    const balloonRef = useRef();
     const [imgUrl, setImgUrl] = useState('');
     const [ansLocked, setAnsLocked] = useState(false);
     const [sentAnswer, setSentAnswer] = useState(false);
     const [answer, setAnswer] = useState('');
-    const [answerDatas, setAnswerDatas] = useState<{
+    type AnswerData = {
         answer: string,
         userId: string,
         isCorrect: boolean
-    }[]>([]);
+    }
+    const [answerDatas, setAnswerDatas] = useState<AnswerData[]>([]);
     const [odai, setOdai] = useState('');
     const [isCompositionend, setIsCompositionend] = useState(false);
     const [isJoinPressed, setIsJoinPressed] = useState(false);
@@ -75,11 +87,11 @@ export const Room = () => {
     const roomRef = useRef<DocumentReference>();
     const isPainter =
         getPainter() === userId.current && getPainter() !== '';
-    const SetRoomID = (value) => {
+    const SetRoomID = (value: string) => {
         roomId.current = value;
         setCookie('roomId', value);
     };
-    const SetUserId = (value) => {
+    const SetUserId = (value: string) => {
         userId.current = value;
         setCookie('userId', value);
     };
@@ -90,11 +102,10 @@ export const Room = () => {
             userId.current = cookie.userId;
             Join();
         } else {
-            setroomName(getParam("roomId") ?? "")
+            setroomName(getParam("roomId", null) ?? "")
         }
     }, []);
     const Clean = () => {
-        balloonRef.current = undefined;
         setImgUrl("");
         setAnsLocked(false);
         setSentAnswer(false);
@@ -154,7 +165,7 @@ url.createObjectURL(blob)
                 } else {
                     //正解データを同期
                     getDocs(collection(roomRef.current!, "members")).then((querySnapshot) => {
-                        let tmp_answerDatas = [];
+                        let tmp_answerDatas:AnswerData[] = [];
                         querySnapshot.forEach((doc) => {
                             if (getPainter() !== doc.id) {
                                 const data = doc.data()
@@ -184,7 +195,7 @@ url.createObjectURL(blob)
         }
     }, [stateGameState]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e:React.MouseEvent) => {
         e.preventDefault();
         const messageRef = push(ref(db, 'rooms/' + roomId.current + '/messages/'), {
             userId: userId.current,
@@ -196,7 +207,7 @@ url.createObjectURL(blob)
 
     const jaRegexp = /^[\u30a0-\u30ff\u3040-\u309f\u3005-\u3006\u30e0-\u9fcf]+$/
 
-    const handleSubmitKey = async (e) => {
+    const handleSubmitKey = async (e:React.KeyboardEvent) => {
         e.preventDefault();
         if (sendMessage.trim() === '') return
         if (sendMessage.match(jaRegexp) && !isCompositionend) {
@@ -225,8 +236,8 @@ url.createObjectURL(blob)
             setIsUrlCopied(false);
         }, 1000);
     };
-    const GetUserNameById = (uid) => {
-        return (userDictionary[uid] || 'Unknown太郎');
+    const GetUserNameById = (uid:string) => {
+        return (userDictionary.get(uid) || 'Unknown太郎');
     }
 
     const ShowChat = () => {
@@ -234,9 +245,9 @@ url.createObjectURL(blob)
         useLayoutEffect(() => {
             if (chatscrollRef.current) chatscrollRef.current.scrollIntoView()
         })
-        if (messages === '') return;
+        if (messages === '') return null;
         for (let [key, i] of Object.entries(messages)) {
-            const info=i as unknown as{userId:string,msg:string,timeStamp:number}
+            const info = i as unknown as { userId: string, msg: string, timeStamp: number }
             let articleClass = info.userId === userId.current ? "msg-self" : "msg-remote"
             articleClass += " msg-container"
             result.push(
@@ -245,25 +256,23 @@ url.createObjectURL(blob)
                         <div className="flr">
                             <p className="msg" id="msg-0">{info.msg}</p>
                         </div>
-                        <span className="timestamp"><span className="username">{GetUserNameById(info.userId)}</span>-<span
+                        <span className="timestamp"><span
+                            className="username">{GetUserNameById(info.userId)}</span>-<span
                             className="posttime">{new Date(info.timeStamp).toLocaleTimeString('ja-JP')}</span></span>
                     </div>
                 </article>
             );
         }
 
-        return (
-            <section className="chat-window" >{result}
+        return (<section className="chat-window">{result}
                 <div ref={chatscrollRef}></div>
-            </section>
-
-        )
+            </section>)
 
     };
-    const SetGameState = async (state) => {
+    const SetGameState = async (state:string) => {
         console.log(state);
         console.log(roomRef.current);
-        await updateDoc(roomRef.current, { State: state });
+        await updateDoc(roomRef.current!, {State: state});
         setGameState(state)
     };
 
@@ -308,14 +317,14 @@ url.createObjectURL(blob)
         };
 
         const CreateRoom = async () => {
-            let res = await addDoc(allRoomRef, { Name: roomName });
+            let res = await addDoc(allRoomRef, {Name: roomName});
             SetRoomID(res.id);
-            await set(ref(db, 'rooms/' + res.id), { messages: '' });
+            await set(ref(db, 'rooms/' + res.id), {messages: ''});
             console.log(res.id);
             createSelf = true;
             return res.id;
         };
-        const SetRoom = async (roomId) => {
+        const SetRoom = async (roomId:string) => {
             console.log(roomId);
             roomRef.current = doc(allRoomRef, roomId);
             if (cookie.roomId === undefined || cookie.roomId === '' || cookie.userId === undefined || cookie.userId === "" || !Object.keys(cookie).length) {
@@ -326,7 +335,7 @@ url.createObjectURL(blob)
             }
             if (createSelf) {
                 //自分が作成者ならPainterを自分に
-                await updateDoc(roomRef.current, { Painter: userId.current });
+                await updateDoc(roomRef.current, {Painter: userId.current});
                 setPainter(userId.current);
             }
         };
@@ -355,10 +364,10 @@ url.createObjectURL(blob)
                     next: (doc) => {
                         const data = doc.data();
                         console.log(data);
-                        setroomName(data.Name);
-                        setGameState(data.State);
+                        setroomName(data!.Name);
+                        setGameState(data!.State);
 
-                        setPainter(data.Painter);
+                        setPainter(data!.Painter);
                     },
                 })
             );
@@ -366,21 +375,21 @@ url.createObjectURL(blob)
             firestoreListenersRef.current.push(
                 onSnapshot(q, {
                     next: (querySnapshot) => {
-                        let tmp = {};
+                        let tmp = new Map<string,string>();
 
                         querySnapshot.forEach((doc) => {
                             console.log(doc.id);
                             console.log(doc.data());
-                            tmp[doc.id] = doc.data().name;
+                            tmp.set(doc.id ,doc.data()!.name as string)
                         });
-                        setUserName(tmp[userId.current]);
+                        setUserName(tmp.get(userId.current)!);
                         setUserDictionary(tmp);
                         // console.log(balloonRef);
                         // balloonRef.current.syncUsers(tmp);
 
                         const Alone = async () => {
                             if (getPainter() !== userId.current) {
-                                await updateDoc(roomRef.current, {
+                                await updateDoc(roomRef.current!, {
                                     Painter: userId.current,
                                 }).then(() => {
                                     //setPainter(userId.userId)
@@ -396,7 +405,7 @@ url.createObjectURL(blob)
                             console.log(getGameState())
 
                             if (!userIds.includes(getPainter()) && userIds[0] === userId.current) {
-                                updateDoc(roomRef.current, {
+                                updateDoc(roomRef.current!, {
                                     Painter: userId.current,
                                 }).then(() => {
                                     SetGameState(GameState.WAIT_START)
@@ -408,7 +417,7 @@ url.createObjectURL(blob)
                                 } else if (getGameState() === GameState.CHAT) {
                                     if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
                                         SetGameState(GameState.CHECK_ANSWER).then(() => {
-                                            let tmp_answerDatas = [];
+                                            let tmp_answerDatas:AnswerData[] = [];
                                             querySnapshot.forEach((doc) => {
                                                 if (getPainter() !== doc.id) {
                                                     const data = doc.data()
@@ -426,7 +435,7 @@ url.createObjectURL(blob)
                             } else if (getGameState() === GameState.CHAT) {
                                 if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
                                     SetGameState(GameState.CHECK_ANSWER).then(() => {
-                                        let tmp_answerDatas = [];
+                                        let tmp_answerDatas:AnswerData[] = [];
                                         querySnapshot.forEach((doc) => {
                                             if (getPainter() !== doc.id) {
                                                 const data = doc.data()
@@ -451,7 +460,7 @@ url.createObjectURL(blob)
         }).finally(() => {
             setIsJoinPressed(false);
         });
-        const JoinChat = (id) => {
+        const JoinChat = (id:string) => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
             onChildAdded(chatRef, (snapshot) => {
                 console.log(snapshot.val());
@@ -474,7 +483,7 @@ url.createObjectURL(blob)
         ).finally(() => {
             roomId.current = '';
             userId.current = '';
-            setUserDictionary({});
+            setUserDictionary(new Map());
             // balloonRef.current.syncUsers({});
             setMessages('');
             setGameState('');
@@ -492,7 +501,7 @@ url.createObjectURL(blob)
     }, [sentAnswer, userDictionary, userName, messages, stateGameState, roomName, isJoined, ansLocked, answer]);
 
     const LockAnswer = useCallback(() => {
-        updateDoc(doc(collection(roomRef.current, '/members/'), userId.current), {
+        updateDoc(doc(collection(roomRef.current!, '/members/'), userId.current), {
             answer: answer
         }).then(() => {
             setAnsLocked(true)
@@ -504,7 +513,7 @@ url.createObjectURL(blob)
         setSentAnswer(true);
         const Async = async () => {
             for (const ans of answerDatas) {
-                await updateDoc(doc(collection(roomRef.current, '/members/'), ans.userId), {
+                await updateDoc(doc(collection(roomRef.current!, '/members/'), ans.userId), {
                     isCorrect: ans.isCorrect
                 })
             }
@@ -515,7 +524,7 @@ url.createObjectURL(blob)
     }
     const StartNewGame = useCallback(() => {
         const uids = Object.keys(userDictionary).filter(uid => uid !== getPainter())
-        updateDoc(roomRef.current, {
+        updateDoc(roomRef.current!, {
             Painter: uids[Math.floor(Math.random() * uids.length)]
         }).then(() => {
             SetGameState(GameState.WAIT_START);
@@ -523,7 +532,7 @@ url.createObjectURL(blob)
     }, [userDictionary])
     return (
         <div>
-            <div style={{ width: '50%', flex: 1, flexDirection: 'row' }}>
+            <div style={{width: '50%', flex: 1, flexDirection: 'row'}}>
                 <div>
 
                     <div>
@@ -561,7 +570,7 @@ url.createObjectURL(blob)
                                             }}
                                         >
                                             {' '}
-                                            {!isCopied ? <ContentCopyIcon /> : <CheckIcon />}
+                                            {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
                                         </IconButton>
                                         <IconButton
                                             aria-label='copyLink'
@@ -574,8 +583,8 @@ url.createObjectURL(blob)
 
                                             {' '}
                                             {!isUrlCopied ?
-                                                <Link /> :
-                                                <CheckIcon />
+                                                <Link/> :
+                                                <CheckIcon/>
                                             }
                                         </IconButton>
                                     </span>
@@ -607,9 +616,15 @@ url.createObjectURL(blob)
                             {/* <div> */}
                             <TextField
                                 label="お話しよう！"
-                                style={{ display: 'flex', width: '35%', position: 'fixed', bottom: 0, backgroundColor: 'white' }}
+                                style={{
+                                    display: 'flex',
+                                    width: '35%',
+                                    position: 'fixed',
+                                    bottom: 0,
+                                    backgroundColor: 'white'
+                                }}
                                 value={sendMessage}
-                                onKeyDown={(e) => {
+                                onKeyDown={(e:React.KeyboardEvent) => {
                                     if (e.key === 'Enter') handleSubmitKey(e)
                                 }}
                                 onChange={(e) => {
@@ -628,7 +643,7 @@ url.createObjectURL(blob)
                                                 color='primary'
                                                 disabled={sendMessage.trim() === ''}
                                             >
-                                                {<Send />}
+                                                {<Send/>}
                                             </IconButton>
                                         </InputAdornment>
                                     ),
@@ -641,7 +656,7 @@ url.createObjectURL(blob)
                 ) : (
                     <></>
                 )}</div>
-            <div style={{ width: '65%' }}>
+            <div style={{width: '65%'}}>
                 {isPainter && (
                     <>
                         <h3>メンバー数:{Object.keys(userDictionary).length}</h3>
@@ -655,7 +670,7 @@ url.createObjectURL(blob)
                                 uploadString(storageRef(
                                     storage,
                                     roomId.current + '.jpg',
-                                ), imageDataUrl, 'data_url',{ cacheControl: "no-cache" }).then(
+                                ), imageDataUrl, 'data_url', {cacheControl: "no-cache"}).then(
                                     (snapshot) => {
 
                                         SetGameState(GameState.CHAT);
@@ -664,25 +679,24 @@ url.createObjectURL(blob)
                             }}
                             canvasOverRay={() => {
                                 return (<>
-                                    <Typography
+                                        <Typography
 
-                                        variant={"h6"}>
-                                        <Balloon ref={balloonRef}></Balloon>
-                                        {GameState.WAIT_START !== stateGameState ?
-                                            "メンバーが集まるまでお待ちください" :
-                                            "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
-                                        }
+                                            variant={"h6"}>
+                                            {GameState.WAIT_START !== stateGameState ?
+                                                "メンバーが集まるまでお待ちください" :
+                                                "今から3秒間の間に上のお題を描いてください。当ててもらえるように頑張って！！"
+                                            }
 
-                                    </Typography>
-                                    <p>
-                                        <Button variant={"contained"}
-                                            disabled={GameState.WAIT_START !== stateGameState}
-                                            onClick={() => {
-                                                SetGameState(GameState.DRAW).then(() => {
-                                                    drawZoneRef.current.start();
-                                                })
-                                            }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
-                                    </p></>
+                                        </Typography>
+                                        <p>
+                                            <Button variant={"contained"}
+                                                    disabled={GameState.WAIT_START !== stateGameState}
+                                                    onClick={() => {
+                                                        SetGameState(GameState.DRAW).then(() => {
+                                                            drawZoneRef.current!.start();
+                                                        })
+                                                    }}><PlayCircleOutline></PlayCircleOutline>ここをクリックでスタート</Button>
+                                        </p></>
                                 )
                             }}
                         />
@@ -693,8 +707,8 @@ url.createObjectURL(blob)
 
                         {!isPainter ?
 
-                            <div style={{ width: '100%', justifyContent: 'center', alignItems: 'center' }}>
-                                <img className={"image"} src={imgUrl} alt={"書かれたもの"} />
+                            <div style={{width: '100%', justifyContent: 'center', alignItems: 'center'}}>
+                                <img className={"image"} src={imgUrl} alt={"書かれたもの"}/>
                                 <TextField
                                     value={answer}
                                     onChange={(e) => {
@@ -713,7 +727,7 @@ url.createObjectURL(blob)
                                                     color='primary'
                                                     disabled={answer === '' || ansLocked}
                                                 >
-                                                    {ansLocked ? <Lock /> : <LockOpen />}
+                                                    {ansLocked ? <Lock/> : <LockOpen/>}
                                                 </IconButton>
                                             </InputAdornment>
 
@@ -732,16 +746,17 @@ url.createObjectURL(blob)
                                         <TableRow>
                                             <TableCell>名前</TableCell>
                                             <TableCell>回答</TableCell>
-                                            {(isPainter || getGameState() === GameState.RESULT) ? <TableCell>正誤(正しければ<Checkbox checked={true} />)</TableCell> : <></>}
+                                            {(isPainter || getGameState() === GameState.RESULT) ?
+                                                <TableCell>正誤(正しければ<Checkbox checked={true}/>)</TableCell> : <></>}
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
-                                        {answerDatas.map((ans , index) => (
+                                        {answerDatas.map((ans, index) => (
 
                                             <TableRow
-                                                style={{ backgroundColor: (ans.userId === userId.current ? getGameState() === GameState.RESULT ? ans.isCorrect ? '#90ee90' : '#ffa07a' : '#add8e6' : '') }}
+                                                style={{backgroundColor: (ans.userId === userId.current ? getGameState() === GameState.RESULT ? ans.isCorrect ? '#90ee90' : '#ffa07a' : '#add8e6' : '')}}
                                                 key={ans.userId}
-                                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                                sx={{'&:last-child td, &:last-child th': {border: 0}}}
                                             >
                                                 <TableCell component="th" scope="row">
                                                     {GetUserNameById(ans.userId)}
@@ -753,7 +768,7 @@ url.createObjectURL(blob)
                                                     <Checkbox
                                                         checked={ans.isCorrect}
                                                         disabled={getGameState() === GameState.RESULT}
-                                                        onChange={(event,checked) => {
+                                                        onChange={(event, checked) => {
                                                             setAnswerDatas((prevState) =>
                                                                 prevState.map((preAns, i) => (i === index ? {
                                                                     ...preAns,
@@ -761,9 +776,9 @@ url.createObjectURL(blob)
                                                                 } : preAns))
                                                             )
                                                         }}
-                                                        inputProps={{ 'aria-label': 'controlled' }}
-                                                        icon={<IconButton>{ans.isCorrect ? <CheckIcon /> :
-                                                            <ClearIcon />}</IconButton>}
+                                                        inputProps={{'aria-label': 'controlled'}}
+                                                        icon={<IconButton>{ans.isCorrect ? <CheckIcon/> :
+                                                            <ClearIcon/>}</IconButton>}
 
                                                     ></Checkbox>
                                                 </TableCell> : <></>}

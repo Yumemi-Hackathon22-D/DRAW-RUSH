@@ -8,13 +8,13 @@ const aspectRatio = 9 / 16
 //例. <DrawZone penRadius={10}></DrawZone>
 const DrawZone = forwardRef((props:{
     canvasOverRay(): React.ReactNode;
-    odai: string; penRadius: number, onDrawEnd: (string) => void
+    odai: string; penRadius: number, onDrawEnd: (imageDataURL:string) => void
 }, drawZoneRef) => {
-    const canvasRef = React.useRef<HTMLCanvasElement>();
+    const canvasRef = React.useRef<HTMLCanvasElement>(null);
     const [click, setClick] = React.useState(false);
     const [lastX, setLastX] = React.useState(0);
     const [lastY, setLastY] = React.useState(0);
-    let canvasContext = useRef(null);
+    let canvasContext = React.useRef<CanvasRenderingContext2D|null>(null);
     useImperativeHandle(drawZoneRef, () => {
         return {
             //ここに関数を定義すれば外部からも呼び出せます。
@@ -32,8 +32,8 @@ const DrawZone = forwardRef((props:{
     useEffect(() => {
         // コンストラクタとコールバック
         const observer = new ResizeObserver((entries) => {
-            canvasRef.current.width = entries[0].contentRect.width;
-            canvasRef.current.height = aspectRatio * entries[0].contentRect.width;
+            canvasRef.current!.width = entries[0].contentRect.width;
+            canvasRef.current!.height = aspectRatio * entries[0].contentRect.width;
 
             if (canvasContext.current != null) {
                 clear();
@@ -66,7 +66,7 @@ const DrawZone = forwardRef((props:{
         }
     }, [canvasContext.current, canvasRef.current]);
     const clickHandler = useCallback(
-        (e) => {
+        (e:React.MouseEvent) => {
             const x = e.nativeEvent.offsetX;
             const y = e.nativeEvent.offsetY;
 
@@ -88,15 +88,17 @@ const DrawZone = forwardRef((props:{
         [click, lastX, lastY]
     );
     const pointerOutHandler = useCallback(
-        (e) => {
+        (e:React.MouseEvent) => {
             if (click) {
                 const x = e.nativeEvent.offsetX;
                 const y = e.nativeEvent.offsetY;
-                canvasContext.current.beginPath();
-                canvasContext.current.moveTo(lastX, lastY);
-                canvasContext.current.lineTo(x, y);
-                canvasContext.current.stroke();
-                canvasContext.current.closePath();
+                if (canvasContext.current) {
+                    canvasContext.current.beginPath();
+                    canvasContext.current.moveTo(lastX, lastY);
+                    canvasContext.current.lineTo(x, y);
+                    canvasContext.current.stroke();
+                    canvasContext.current.closePath();
+                }
                 setLastX(x);
                 setLastY(y);
                 setClick(false);
@@ -105,7 +107,7 @@ const DrawZone = forwardRef((props:{
         [click, lastX, lastY]
     );
     const pointerMoveHandler = useCallback(
-        (e) => {
+        (e:React.MouseEvent) => {
             if (click) {
                 const x = e.nativeEvent.offsetX;
                 const y = e.nativeEvent.offsetY;
@@ -124,8 +126,8 @@ const DrawZone = forwardRef((props:{
     );
 
     function clear() {
-        canvasContext.current.fillStyle = "#FFFFFF";
-        canvasContext.current.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        canvasContext.current!.fillStyle = "#FFFFFF";
+        canvasContext.current!.fillRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
 
     }
 
@@ -143,7 +145,7 @@ const DrawZone = forwardRef((props:{
                 setBeforeStart(true);
                 const imageDataUrl = canvasRef.current?.toDataURL("image/jpeg", 0);
                 console.log(imageDataUrl);
-                props.onDrawEnd(imageDataUrl);
+                props.onDrawEnd(imageDataUrl!);
                 clear();
                 clearInterval(timer);
             }
