@@ -24,8 +24,7 @@ import {
     Table,
     TableHead, TableRow, TableCell, TableBody, Checkbox
 } from '@mui/material';
-import {Lock, LockOpen, PlayCircleOutline, Send, Link} from '@mui/icons-material';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import {Lock, LockOpen, PlayCircleOutline, Send} from '@mui/icons-material';
 import CheckIcon from '@mui/icons-material/Check';
 import DrawZone, {DrawZoneRef} from './DrawZone';
 import {ref as storageRef, uploadString, getDownloadURL} from 'firebase/storage';
@@ -37,6 +36,8 @@ import getParam from '../getParam'
 import {DocumentReference} from "@firebase/firestore"
 import firebase from "firebase/compat";
 import Unsubscribe = firebase.Unsubscribe;
+import JoinForm from "./JoinForm";
+import RoomStatus from "./RoomStatus";
 
 const GameState = {
     //enum風
@@ -66,8 +67,8 @@ export const Room = () => {
     const [sendMessage, setSendMessage] = useState('');
     const [userName, setUserName] = useState('');
     const [cookie, setCookie, removeCookie] = useCookies();
-    const [userDictionary, setUserDictionary] = useState<Map<string,string>>(new Map());
-    const firestoreListenersRef = useRef< Unsubscribe[]>([]);
+    const [userDictionary, setUserDictionary] = useState<Map<string, string>>(new Map());
+    const firestoreListenersRef = useRef<Unsubscribe[]>([]);
     const [isCopied, setIsCopied] = useState(false);
     const [isUrlCopied, setIsUrlCopied] = useState(false);
     const [imgUrl, setImgUrl] = useState('');
@@ -82,7 +83,6 @@ export const Room = () => {
     const [answerDatas, setAnswerDatas] = useState<AnswerData[]>([]);
     const [odai, setOdai] = useState('');
     const [isCompositionend, setIsCompositionend] = useState(false);
-    const [isJoinPressed, setIsJoinPressed] = useState(false);
 
     const roomRef = useRef<DocumentReference>();
     const isPainter =
@@ -165,7 +165,7 @@ url.createObjectURL(blob)
                 } else {
                     //正解データを同期
                     getDocs(collection(roomRef.current!, "members")).then((querySnapshot) => {
-                        let tmp_answerDatas:AnswerData[] = [];
+                        let tmp_answerDatas: AnswerData[] = [];
                         querySnapshot.forEach((doc) => {
                             if (getPainter() !== doc.id) {
                                 const data = doc.data()
@@ -195,7 +195,7 @@ url.createObjectURL(blob)
         }
     }, [stateGameState]);
 
-    const handleSubmit = async (e:React.MouseEvent) => {
+    const handleSubmit = async (e: React.MouseEvent) => {
         e.preventDefault();
         const messageRef = push(ref(db, 'rooms/' + roomId.current + '/messages/'), {
             userId: userId.current,
@@ -207,7 +207,7 @@ url.createObjectURL(blob)
 
     const jaRegexp = /^[\u30a0-\u30ff\u3040-\u309f\u3005-\u3006\u30e0-\u9fcf]+$/
 
-    const handleSubmitKey = async (e:React.KeyboardEvent) => {
+    const handleSubmitKey = async (e: React.KeyboardEvent) => {
         e.preventDefault();
         if (sendMessage.trim() === '') return
         if (sendMessage.match(jaRegexp) && !isCompositionend) {
@@ -236,7 +236,7 @@ url.createObjectURL(blob)
             setIsUrlCopied(false);
         }, 1000);
     };
-    const GetUserNameById = (uid:string) => {
+    const GetUserNameById = (uid: string) => {
         return (userDictionary.get(uid) || 'Unknown太郎');
     }
 
@@ -265,11 +265,11 @@ url.createObjectURL(blob)
         }
 
         return (<section className="chat-window">{result}
-                <div ref={chatscrollRef}></div>
-            </section>)
+            <div ref={chatscrollRef}></div>
+        </section>)
 
     };
-    const SetGameState = async (state:string) => {
+    const SetGameState = async (state: string) => {
         console.log(state);
         console.log(roomRef.current);
         await updateDoc(roomRef.current!, {State: state});
@@ -278,7 +278,6 @@ url.createObjectURL(blob)
 
 
     const Join = useCallback(() => {
-        setIsJoinPressed(true)
         let createSelf = false;
         if (
             (userName === '' || roomName === '') &&
@@ -286,7 +285,6 @@ url.createObjectURL(blob)
             !cookie.roomId
         ) {
             alert('ルーム名かユーザー名を入力してください');
-            setIsJoinPressed(false);
             return;
         }
         const CheckRoom = async () => {
@@ -324,7 +322,7 @@ url.createObjectURL(blob)
             createSelf = true;
             return res.id;
         };
-        const SetRoom = async (roomId:string) => {
+        const SetRoom = async (roomId: string) => {
             console.log(roomId);
             roomRef.current = doc(allRoomRef, roomId);
             if (cookie.roomId === undefined || cookie.roomId === '' || cookie.userId === undefined || cookie.userId === "" || !Object.keys(cookie).length) {
@@ -346,7 +344,6 @@ url.createObjectURL(blob)
                 return '';
             }
             await SetRoom(id);
-            setIsJoinPressed(false);
             return id;
         };
 
@@ -375,12 +372,12 @@ url.createObjectURL(blob)
             firestoreListenersRef.current.push(
                 onSnapshot(q, {
                     next: (querySnapshot) => {
-                        let tmp = new Map<string,string>();
+                        let tmp = new Map<string, string>();
 
                         querySnapshot.forEach((doc) => {
                             console.log(doc.id);
                             console.log(doc.data());
-                            tmp.set(doc.id ,doc.data()!.name as string)
+                            tmp.set(doc.id, doc.data()!.name as string)
                         });
                         setUserName(tmp.get(userId.current)!);
                         setUserDictionary(tmp);
@@ -417,7 +414,7 @@ url.createObjectURL(blob)
                                 } else if (getGameState() === GameState.CHAT) {
                                     if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
                                         SetGameState(GameState.CHECK_ANSWER).then(() => {
-                                            let tmp_answerDatas:AnswerData[] = [];
+                                            let tmp_answerDatas: AnswerData[] = [];
                                             querySnapshot.forEach((doc) => {
                                                 if (getPainter() !== doc.id) {
                                                     const data = doc.data()
@@ -435,7 +432,7 @@ url.createObjectURL(blob)
                             } else if (getGameState() === GameState.CHAT) {
                                 if (querySnapshot.docs.every(doc => doc.data().answer || getPainter() === doc.id)) {
                                     SetGameState(GameState.CHECK_ANSWER).then(() => {
-                                        let tmp_answerDatas:AnswerData[] = [];
+                                        let tmp_answerDatas: AnswerData[] = [];
                                         querySnapshot.forEach((doc) => {
                                             if (getPainter() !== doc.id) {
                                                 const data = doc.data()
@@ -458,9 +455,8 @@ url.createObjectURL(blob)
             JoinChat(id);
             setIsJoined(true);
         }).finally(() => {
-            setIsJoinPressed(false);
         });
-        const JoinChat = (id:string) => {
+        const JoinChat = (id: string) => {
             const chatRef = ref(db, 'rooms/' + id + '/messages');
             onChildAdded(chatRef, (snapshot) => {
                 console.log(snapshot.val());
@@ -530,77 +526,12 @@ url.createObjectURL(blob)
             SetGameState(GameState.WAIT_START);
         })
     }, [userDictionary])
+
     return (
         <div>
             <div style={{width: '50%', flex: 1, flexDirection: 'row'}}>
-                <div>
-
-                    <div>
-                        <TextField
-                            disabled={isJoined}
-                            value={roomName}
-                            onChange={(e) => {
-                                let tmpRoomname = e.target.value;
-                                console.log(tmpRoomname)
-                                setroomName(e.target.value);
-                            }}
-                            label='ルーム名/ID'
-                            variant='filled'
-                        ></TextField>
-                        <TextField
-                            value={userName}
-                            disabled={isJoined}
-                            label='ユーザー名'
-                            onChange={(e) => setUserName(e.target.value)}
-                            variant='filled'
-                        ></TextField>
-                        {isJoined ? (
-                            <div>
-                                <Button variant='contained' color='error' onClick={Left}>
-                                    Left
-                                </Button>
-                                <div>
-                                    <span>
-                                        この部屋のID: {roomId.current}
-                                        <IconButton
-                                            aria-label='copy'
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(roomId.current);
-                                                Checked();
-                                            }}
-                                        >
-                                            {' '}
-                                            {!isCopied ? <ContentCopyIcon/> : <CheckIcon/>}
-                                        </IconButton>
-                                        <IconButton
-                                            aria-label='copyLink'
-                                            onClick={() => {
-                                                const shareUrl = window.location.origin + "?roomId=" + roomId.current
-                                                navigator.clipboard.writeText(shareUrl);
-                                                CheckedUrl();
-                                            }}
-                                        >
-
-                                            {' '}
-                                            {!isUrlCopied ?
-                                                <Link/> :
-                                                <CheckIcon/>
-                                            }
-                                        </IconButton>
-                                    </span>
-                                </div>
-                            </div>
-                        ) : (
-                            <Button variant='contained' onClick={Join} disabled={isJoinPressed}>
-                                Join
-                            </Button>
-                        )}
-                        <div>
-
-                        </div>
-                    </div>
-
-                </div>
+               <JoinForm Join={a}/>
+                <RoomStatus/>
                 {isJoined ? (
                     <>
                         <div style={{
@@ -624,7 +555,7 @@ url.createObjectURL(blob)
                                     backgroundColor: 'white'
                                 }}
                                 value={sendMessage}
-                                onKeyDown={(e:React.KeyboardEvent) => {
+                                onKeyDown={(e: React.KeyboardEvent) => {
                                     if (e.key === 'Enter') handleSubmitKey(e)
                                 }}
                                 onChange={(e) => {
